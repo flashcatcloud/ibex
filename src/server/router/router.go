@@ -14,12 +14,10 @@ import (
 
 var InternalServerError = "InternalServerError"
 
-var skipPaths = []string{}
-
 func New(version string) *gin.Engine {
 	gin.SetMode(config.C.RunMode)
 
-	loggerMid := aop.LoggerWithConfig(aop.LoggerConfig{SkipPaths: skipPaths})
+	loggerMid := aop.Logger()
 	recoveryMid := aop.Recovery()
 
 	if strings.ToLower(config.C.RunMode) == "release" {
