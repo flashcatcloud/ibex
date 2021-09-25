@@ -62,12 +62,30 @@ func MustLoad(fpaths ...string) {
 
 type Config struct {
 	RunMode   string
+	RPC       RPC
+	Heartbeat Heartbeat
+	Output    Output
 	Log       logx.Config
 	HTTP      httpx.Config
 	BasicAuth gin.Accounts
 	Gorm      storage.Gorm
 	MySQL     storage.MySQL
 	Postgres  storage.Postgres
+}
+
+type RPC struct {
+	Listen string
+}
+
+type Heartbeat struct {
+	IP        string
+	LocalAddr string
+	Interval  int64
+}
+
+type Output struct {
+	ComeFrom string
+	AgtdPort int
 }
 
 func (c *Config) IsDebugMode() bool {

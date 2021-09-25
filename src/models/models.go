@@ -1,9 +1,9 @@
 package models
 
 import (
+	"fmt"
 	"gorm.io/gorm"
-	
-	"github.com/toolkits/pkg/str"
+
 	"github.com/ulricqin/ibex/src/storage"
 )
 
@@ -24,4 +24,8 @@ func Exists(tx *gorm.DB) (bool, error) {
 
 func Insert(objPtr interface{}) error {
 	return DB().Create(objPtr).Error
+}
+
+func tht(id int64) string {
+	return fmt.Sprintf("task_host_%d", id%100)
 }
