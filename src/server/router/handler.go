@@ -4,10 +4,13 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/errorx"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/logger"
+	"github.com/toolkits/pkg/slice"
 	"github.com/ulricqin/ibex/src/models"
 	"github.com/ulricqin/ibex/src/server/config"
 )
@@ -291,4 +294,172 @@ func taskStderrJSON(c *gin.Context) {
 	}
 
 	ginx.NewRender(c).Data(ret, nil)
+}
+
+type taskForm struct {
+	Title     string   `json:"title" binding:"required"`
+	Account   string   `json:"account" binding:"required"`
+	Batch     int      `json:"batch"`
+	Tolerance int      `json:"tolerance"`
+	Timeout   int      `json:"timeout"`
+	Pause     string   `json:"pause"`
+	Script    string   `json:"script" binding:"required"`
+	Args      string   `json:"args"`
+	Action    string   `json:"action" binding:"required"`
+	Creator   string   `json:"creator" binding:"required"`
+	Hosts     []string `json:"hosts" binding:"required"`
+}
+
+func taskAdd(c *gin.Context) {
+	var f taskForm
+	ginx.BindJSON(c, &f)
+
+	hosts := cleanHosts(f.Hosts)
+	if len(hosts) == 0 {
+		errorx.Bomb(http.StatusBadRequest, "arg(hosts) empty")
+	}
+
+	task := &models.TaskMeta{
+		Title:     f.Title,
+		Account:   f.Account,
+		Batch:     f.Batch,
+		Tolerance: f.Tolerance,
+		Timeout:   f.Timeout,
+		Pause:     f.Pause,
+		Script:    f.Script,
+		Args:      f.Args,
+		Creator:   f.Creator,
+	}
+
+	authUser := c.MustGet(gin.AuthUserKey).(string)
+
+	err := task.Save(hosts, f.Action)
+	if err != nil {
+		logger.Infof("task_create_succ: authUser=%s title=%s", authUser, task.Title)
+	} else {
+		logger.Infof("task_create_fail: authUser=%s title=%s", authUser, task.Title)
+	}
+
+	ginx.NewRender(c).Data(task.Id, err)
+}
+
+func taskGet(c *gin.Context) {
+	meta := TaskMeta(ginx.UrlParamInt64(c, "id"))
+
+	hosts, err := meta.Hosts()
+	errorx.Dangerous(err)
+
+	action, err := meta.Action()
+	errorx.Dangerous(err)
+
+	actionStr := ""
+	if action != nil {
+		actionStr = action.Action
+	} else {
+		meta.Done = true
+	}
+
+	ginx.NewRender(c).Data(gin.H{
+		"meta":   meta,
+		"hosts":  hosts,
+		"action": actionStr,
+	}, nil)
+}
+
+func taskGets(c *gin.Context) {
+	query := ginx.QueryStr(c, "query", "")
+	limit := ginx.QueryInt(c, "limit", 20)
+	creator := ginx.QueryStr(c, "creator", "")
+	days := ginx.QueryInt64(c, "days", 7)
+
+	before := time.Unix(time.Now().Unix()-days*24*3600, 0)
+
+	total, err := models.TaskMetaTotal(creator, query, before)
+	errorx.Dangerous(err)
+
+	list, err := models.TaskMetaGets(creator, query, before, limit, ginx.Offset(c, limit))
+	errorx.Dangerous(err)
+
+	cnt := len(list)
+	ids := make([]int64, cnt)
+	for i := 0; i < cnt; i++ {
+		ids[i] = list[i].Id
+	}
+
+	exists, err := models.TaskActionExistsIds(ids)
+	errorx.Dangerous(err)
+
+	for i := 0; i < cnt; i++ {
+		if slice.ContainsInt64(exists, list[i].Id) {
+			list[i].Done = false
+		} else {
+			list[i].Done = true
+		}
+	}
+
+	ginx.NewRender(c).Data(gin.H{
+		"total": total,
+		"list":  list,
+	}, nil)
+}
+
+type actionForm struct {
+	Action string `json:"action"`
+}
+
+func taskAction(c *gin.Context) {
+	meta := TaskMeta(ginx.UrlParamInt64(c, "id"))
+
+	var f actionForm
+	ginx.BindJSON(c, &f)
+
+	action, err := models.TaskActionGet("id=?", meta.Id)
+	errorx.Dangerous(err)
+
+	if action == nil {
+		errorx.Bomb(200, "task already finished, no more action can do")
+	}
+
+	ginx.NewRender(c).Message(action.Update(f.Action))
+}
+
+func taskHostAction(c *gin.Context) {
+	host := ginx.UrlParamStr(c, "host")
+	meta := TaskMeta(ginx.UrlParamInt64(c, "id"))
+
+	noopWhenDone(meta.Id)
+
+	var f actionForm
+	ginx.BindJSON(c, &f)
+
+	if f.Action == "ignore" {
+		errorx.Dangerous(meta.IgnoreHost(host))
+
+		action, err := models.TaskActionGet("id=?", meta.Id)
+		errorx.Dangerous(err)
+
+		if action != nil && action.Action == "pause" {
+			ginx.NewRender(c).Data("you can click start to run the task", nil)
+			return
+		}
+	}
+
+	if f.Action == "kill" {
+		errorx.Dangerous(meta.KillHost(host))
+	}
+
+	if f.Action == "redo" {
+		errorx.Dangerous(meta.RedoHost(host))
+	}
+
+	ginx.NewRender(c).Message(nil)
+}
+
+func noopWhenDone(id int64) {
+	action, err := models.TaskActionGet("id=?", id)
+	errorx.Dangerous(err)
+
+	if action == nil {
+		errorx.Bomb(200, "task already finished, no more action can do")
+	}
 }

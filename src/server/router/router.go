@@ -59,10 +59,15 @@ func configRoute(r *gin.Engine, version string) {
 
 	api := r.Group("/ibex/v1", gin.BasicAuth(config.C.BasicAuth))
 	{
+		api.POST("/tasks", taskAdd)
+		api.GET("/tasks", taskGets)
+		api.GET("/task/:id", taskGet)
+		api.PUT("/task/:id/action", taskAction)
 		api.GET("/task/:id/stdout", taskStdout)
 		api.GET("/task/:id/stderr", taskStderr)
 		api.GET("/task/:id/state", taskState)
 		api.GET("/task/:id/result", taskResult)
+		api.PUT("/task/:id/host/:host/action", taskHostAction)
 		api.GET("/task/:id/host/:host/output", taskHostOutput)
 		api.GET("/task/:id/host/:host/stdout", taskHostStdout)
 		api.GET("/task/:id/host/:host/stderr", taskHostStderr)
