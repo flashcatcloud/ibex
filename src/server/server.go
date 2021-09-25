@@ -3,15 +3,19 @@ package server
 import (
 	"context"
 	"fmt"
+	"github.com/toolkits/pkg/i18n"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"syscall"
+	"time"
 
+	"github.com/toolkits/pkg/cache"
 	"github.com/ulricqin/ibex/src/pkg/httpx"
 	"github.com/ulricqin/ibex/src/pkg/logx"
 	"github.com/ulricqin/ibex/src/server/config"
 	"github.com/ulricqin/ibex/src/server/router"
+	"github.com/ulricqin/ibex/src/server/rpc"
 	"github.com/ulricqin/ibex/src/storage"
 )
 
@@ -81,11 +85,17 @@ func (a Server) initialize() (func(), error) {
 	// parse config file
 	config.MustLoad(a.ConfigFile)
 
+	// init i18n
+	i18n.Init()
+
 	// init logger
 	loggerClean, err := logx.Init(config.C.Log)
 	if err != nil {
 		return nil, err
 	}
+
+	// agentd pull task meta, which can be cached
+	cache.InitMemoryCache(time.Hour)
 
 	// init database
 	if err = storage.InitDB(storage.Config{
@@ -99,6 +109,9 @@ func (a Server) initialize() (func(), error) {
 	// init http server
 	r := router.New(a.Version)
 	httpClean := httpx.Init(config.C.HTTP, ctx, r)
+
+	// start rpc server
+	rpc.Start(config.C.RPC.Listen)
 
 	// release all the resources
 	return func() {

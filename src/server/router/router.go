@@ -12,8 +12,6 @@ import (
 	"github.com/ulricqin/ibex/src/server/config"
 )
 
-var InternalServerError = "InternalServerError"
-
 func New(version string) *gin.Engine {
 	gin.SetMode(config.C.RunMode)
 
@@ -59,10 +57,18 @@ func configRoute(r *gin.Engine, version string) {
 		c.String(200, version)
 	})
 
-	api := r.Group("/v1", gin.BasicAuth(config.C.BasicAuth))
+	api := r.Group("/ibex/v1", gin.BasicAuth(config.C.BasicAuth))
 	{
-		api.GET("/version", func(c *gin.Context) {
-			c.String(200, version)
-		})
+		api.GET("/task/:id/stdout", taskStdout)
+		api.GET("/task/:id/stderr", taskStderr)
+		api.GET("/task/:id/state", taskState)
+		api.GET("/task/:id/result", taskResult)
+		api.GET("/task/:id/host/:host/output", taskHostOutput)
+		api.GET("/task/:id/host/:host/stdout", taskHostStdout)
+		api.GET("/task/:id/host/:host/stderr", taskHostStderr)
+		api.GET("/task/:id/stdout.txt", taskStdoutTxt)
+		api.GET("/task/:id/stderr.txt", taskStderrTxt)
+		api.GET("/task/:id/stdout.json", taskStdoutJSON)
+		api.GET("/task/:id/stderr.json", taskStderrJSON)
 	}
 }
