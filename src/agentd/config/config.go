@@ -60,7 +60,7 @@ func MustLoad(fpaths ...string) {
 
 		if C.Heartbeat.Host == "$ip" {
 			C.Heartbeat.Endpoint = fmt.Sprint(GetOutboundIP())
-			if C.Heartbeat.Host == "" {
+			if C.Heartbeat.Endpoint == "" {
 				fmt.Println("ip auto got is blank")
 				os.Exit(1)
 			}
@@ -94,6 +94,18 @@ type Heartbeat struct {
 
 func (c *Config) IsDebugMode() bool {
 	return c.RunMode == "debug"
+}
+
+func (c *Config) GetHost() (string, error) {
+	if c.Heartbeat.Host == "$ip" {
+		return c.Heartbeat.Endpoint, nil
+	}
+
+	if c.Heartbeat.Host == "$hostname" {
+		return os.Hostname()
+	}
+
+	return c.Heartbeat.Host, nil
 }
 
 // Get preferred outbound ip of this machine
