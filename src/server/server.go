@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"github.com/toolkits/pkg/i18n"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -11,6 +10,8 @@ import (
 	"time"
 
 	"github.com/toolkits/pkg/cache"
+	"github.com/toolkits/pkg/i18n"
+
 	"github.com/ulricqin/ibex/src/pkg/httpx"
 	"github.com/ulricqin/ibex/src/pkg/logx"
 	"github.com/ulricqin/ibex/src/server/config"
@@ -45,7 +46,7 @@ func Run(opts ...ServerOption) {
 	signal.Notify(sc, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 
 	server := Server{
-		ConfigFile: filepath.Join("etc", "ibex-server.conf"),
+		ConfigFile: filepath.Join("etc", "server.conf"),
 		Version:    "not specified",
 	}
 

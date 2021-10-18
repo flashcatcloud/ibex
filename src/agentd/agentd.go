@@ -34,7 +34,7 @@ func Run(opts ...AgentdOption) {
 	signal.Notify(sc, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 
 	agentd := Agentd{
-		ConfigFile: filepath.Join("etc", "ibex-agentd.conf"),
+		ConfigFile: filepath.Join("etc", "agentd.conf"),
 		Version:    "not specified",
 	}
 

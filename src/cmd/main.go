@@ -17,7 +17,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "ibex"
 	app.Version = VERSION
-	app.Usage = "Ibex, running scripts on large machines"
+	app.Usage = "Ibex, running scripts on large scale machines"
 	app.Commands = []*cli.Command{
 		newServerCmd(),
 		newAgentdCmd(),
