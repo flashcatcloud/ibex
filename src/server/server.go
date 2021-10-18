@@ -80,11 +80,11 @@ EXIT:
 	os.Exit(code)
 }
 
-func (a Server) initialize() (func(), error) {
+func (s Server) initialize() (func(), error) {
 	ctx := context.Background()
 
 	// parse config file
-	config.MustLoad(a.ConfigFile)
+	config.MustLoad(s.ConfigFile)
 
 	// init i18n
 	i18n.Init()
@@ -104,11 +104,11 @@ func (a Server) initialize() (func(), error) {
 		MySQL:    config.C.MySQL,
 		Postgres: config.C.Postgres,
 	}); err != nil {
-		return nil, err
+		return loggerClean, err
 	}
 
 	// init http server
-	r := router.New(a.Version)
+	r := router.New(s.Version)
 	httpClean := httpx.Init(config.C.HTTP, ctx, r)
 
 	// start rpc server
