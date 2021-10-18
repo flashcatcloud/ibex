@@ -17,6 +17,7 @@ import (
 	"github.com/ulricqin/ibex/src/server/config"
 	"github.com/ulricqin/ibex/src/server/router"
 	"github.com/ulricqin/ibex/src/server/rpc"
+	"github.com/ulricqin/ibex/src/server/timer"
 	"github.com/ulricqin/ibex/src/storage"
 )
 
@@ -110,6 +111,11 @@ func (s Server) initialize() (func(), error) {
 	}); err != nil {
 		return fns.Ret(), err
 	}
+
+	timer.CacheHostDoing()
+	go timer.Heartbeat()
+	go timer.Schedule()
+	go timer.CleanLong()
 
 	// init http server
 	r := router.New(s.Version)

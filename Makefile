@@ -9,10 +9,10 @@ build:
 	@go build -ldflags "-w -s -X main.VERSION=$(APP_VER)" -o $(APP_BIN) ./src/cmd
 
 start_server:
-	./$(APP_BIN) server -c ./etc/ibex-server.conf
+	./$(APP_BIN) server -c ./etc/server.conf
 
 start_agentd:
-	./$(APP_BIN) agentd -c ./etc/ibex-agentd.conf
+	./$(APP_BIN) agentd -c ./etc/agentd.conf
 
 pack: build
 	tar zcvf $(APP_BIN)-$(APP_VER).tar.gz etc sql $(APP_BIN)

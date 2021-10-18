@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"log"
 	"net"
 	"os"
 	"path"
@@ -58,6 +59,13 @@ func MustLoad(fpaths ...string) {
 			Validator: multiconfig.MultiValidator(&multiconfig.RequiredValidator{}),
 		}
 
+		m.MustLoad(C)
+
+		if C.Heartbeat.Host == "" {
+			fmt.Println("heartbeat.host is blank")
+			os.Exit(1)
+		}
+
 		if C.Heartbeat.Host == "$ip" {
 			C.Heartbeat.Endpoint = fmt.Sprint(GetOutboundIP())
 			if C.Heartbeat.Endpoint == "" {
@@ -67,14 +75,20 @@ func MustLoad(fpaths ...string) {
 			fmt.Println("host.ip:", C.Heartbeat.Endpoint)
 		}
 
+		host, err := C.GetHost()
+		if err != nil {
+			log.Println("E: failed to GetHost:", err)
+			os.Exit(1)
+		}
+
+		fmt.Println("host:", host)
+
 		if C.MetaDir == "" {
 			C.MetaDir = "./meta"
 		}
 
 		C.MetaDir = path.Join(runner.Cwd, C.MetaDir)
 		file.EnsureDir(C.MetaDir)
-
-		m.MustLoad(C)
 	})
 }
 

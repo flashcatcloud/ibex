@@ -58,7 +58,15 @@ func heartbeat() {
 		}
 	}
 
-	log.Println("D: assigned tasks:", assigned)
+	log.Println("D: assigned tasks:", mapKeys(assigned))
 
 	Locals.Clean(assigned)
+}
+
+func mapKeys(m map[int64]struct{}) []int64 {
+	lst := make([]int64, 0, len(m))
+	for k := range m {
+		lst = append(lst, k)
+	}
+	return lst
 }
