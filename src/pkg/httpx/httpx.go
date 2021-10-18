@@ -9,6 +9,7 @@ import (
 )
 
 type Config struct {
+	Enable           bool
 	Host             string
 	Port             int
 	CertFile         string
@@ -23,6 +24,10 @@ type Config struct {
 }
 
 func Init(cfg Config, ctx context.Context, handler http.Handler) func() {
+	if !cfg.Enable {
+		return func() {}
+	}
+
 	addr := fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)
 	srv := &http.Server{
 		Addr:         addr,

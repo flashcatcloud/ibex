@@ -1,11 +1,20 @@
 package agentd
 
 import (
+	"context"
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"syscall"
+
+	"github.com/toolkits/pkg/i18n"
+
+	"github.com/ulricqin/ibex/src/agentd/config"
+	"github.com/ulricqin/ibex/src/agentd/router"
+	"github.com/ulricqin/ibex/src/agentd/timer"
+	"github.com/ulricqin/ibex/src/pkg/httpx"
 )
 
 type Agentd struct {
@@ -69,6 +78,40 @@ EXIT:
 }
 
 func (s Agentd) initialize() (func(), error) {
-	fmt.Println("agentd init")
-	return func() {}, nil
+	fns := Functions{}
+	ctx, cancel := context.WithCancel(context.Background())
+	fns.Add(cancel)
+
+	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
+
+	// parse config file
+	config.MustLoad(s.ConfigFile)
+
+	// init i18n
+	i18n.Init()
+
+	// init http server
+	r := router.New(s.Version)
+	httpClean := httpx.Init(config.C.HTTP, ctx, r)
+	fns.Add(httpClean)
+
+	go timer.Heartbeat(ctx)
+
+	return fns.Ret(), nil
+}
+
+type Functions struct {
+	List []func()
+}
+
+func (fs *Functions) Add(f func()) {
+	fs.List = append(fs.List, f)
+}
+
+func (fs *Functions) Ret() func() {
+	return func() {
+		for i := 0; i < len(fs.List); i++ {
+			fs.List[i]()
+		}
+	}
 }

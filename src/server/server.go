@@ -81,7 +81,9 @@ EXIT:
 }
 
 func (s Server) initialize() (func(), error) {
-	ctx := context.Background()
+	fns := Functions{}
+	ctx, cancel := context.WithCancel(context.Background())
+	fns.Add(cancel)
 
 	// parse config file
 	config.MustLoad(s.ConfigFile)
@@ -92,7 +94,9 @@ func (s Server) initialize() (func(), error) {
 	// init logger
 	loggerClean, err := logx.Init(config.C.Log)
 	if err != nil {
-		return nil, err
+		return fns.Ret(), err
+	} else {
+		fns.Add(loggerClean)
 	}
 
 	// agentd pull task meta, which can be cached
@@ -104,19 +108,33 @@ func (s Server) initialize() (func(), error) {
 		MySQL:    config.C.MySQL,
 		Postgres: config.C.Postgres,
 	}); err != nil {
-		return loggerClean, err
+		return fns.Ret(), err
 	}
 
 	// init http server
 	r := router.New(s.Version)
 	httpClean := httpx.Init(config.C.HTTP, ctx, r)
+	fns.Add(httpClean)
 
 	// start rpc server
 	rpc.Start(config.C.RPC.Listen)
 
 	// release all the resources
+	return fns.Ret(), nil
+}
+
+type Functions struct {
+	List []func()
+}
+
+func (fs *Functions) Add(f func()) {
+	fs.List = append(fs.List, f)
+}
+
+func (fs *Functions) Ret() func() {
 	return func() {
-		loggerClean()
-		httpClean()
-	}, nil
+		for i := 0; i < len(fs.List); i++ {
+			fs.List[i]()
+		}
+	}
 }
