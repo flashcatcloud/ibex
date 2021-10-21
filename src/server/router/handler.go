@@ -11,6 +11,7 @@ import (
 	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/slice"
+	"github.com/toolkits/pkg/str"
 	"github.com/ulricqin/ibex/src/models"
 	"github.com/ulricqin/ibex/src/server/config"
 )
@@ -363,6 +364,27 @@ func taskGet(c *gin.Context) {
 		"meta":   meta,
 		"hosts":  hosts,
 		"action": actionStr,
+	}, nil)
+}
+
+// 传进来一堆ids，返回已经done的任务的ids
+func doneIds(c *gin.Context) {
+	ids := ginx.QueryStr(c, "ids", "")
+	if ids == "" {
+		errorx.Dangerous("arg(ids) empty")
+	}
+
+	idsint64 := str.IdsInt64(ids, ",")
+	if len(idsint64) == 0 {
+		errorx.Dangerous("arg(ids) empty")
+	}
+
+	exists, err := models.TaskActionExistsIds(idsint64)
+	errorx.Dangerous(err)
+
+	dones := slice.SubInt64(idsint64, exists)
+	ginx.NewRender(c).Data(gin.H{
+		"list": dones,
 	}, nil)
 }
 

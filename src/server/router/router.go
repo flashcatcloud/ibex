@@ -61,6 +61,7 @@ func configRoute(r *gin.Engine, version string) {
 	{
 		api.POST("/tasks", taskAdd)
 		api.GET("/tasks", taskGets)
+		api.GET("/tasks/done-ids", doneIds)
 		api.GET("/task/:id", taskGet)
 		api.PUT("/task/:id/action", taskAction)
 		api.GET("/task/:id/stdout", taskStdout)
