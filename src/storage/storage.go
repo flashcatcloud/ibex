@@ -3,6 +3,7 @@ package storage
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"gorm.io/gorm"
 
@@ -26,8 +27,7 @@ type Gorm struct {
 }
 
 type MySQL struct {
-	Host       string
-	Port       int
+	Address    string
 	User       string
 	Password   string
 	DBName     string
@@ -35,13 +35,12 @@ type MySQL struct {
 }
 
 func (a MySQL) DSN() string {
-	return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?%s",
-		a.User, a.Password, a.Host, a.Port, a.DBName, a.Parameters)
+	return fmt.Sprintf("%s:%s@tcp(%s)/%s?%s",
+		a.User, a.Password, a.Address, a.DBName, a.Parameters)
 }
 
 type Postgres struct {
-	Host     string
-	Port     int
+	Address  string
 	User     string
 	Password string
 	DBName   string
@@ -49,8 +48,13 @@ type Postgres struct {
 }
 
 func (a Postgres) DSN() string {
-	return fmt.Sprintf("host=%s port=%d user=%s dbname=%s password=%s sslmode=%s",
-		a.Host, a.Port, a.User, a.DBName, a.Password, a.SSLMode)
+	arr := strings.Split(a.Address, ":")
+	if len(arr) != 2 {
+		panic("pg address(" + a.Address + ") invalid")
+	}
+
+	return fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=%s",
+		arr[0], arr[1], a.User, a.DBName, a.Password, a.SSLMode)
 }
 
 var DB *gorm.DB
