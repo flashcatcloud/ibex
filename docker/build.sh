@@ -19,6 +19,7 @@ cp ../ibex . && chmod +x ibex
 cp -r ../etc .
 sed -i 's/127.0.0.1:3306/mysql:3306/g' ./etc/server.conf
 sed -i 's/127.0.0.1:5432/postgres:5432/g' ./etc/server.conf
+sed -i 's/127.0.0.1:20090/ibex:20090/g' ./etc/agentd.conf
 
 # make tarball and delete tmp files
 tar zcvf ibex.tar.gz ibex etc && rm -rf ibex etc
