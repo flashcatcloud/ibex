@@ -9,19 +9,8 @@ tag=$1
 
 echo "tag: ${tag}"
 
-# clean workspace
-rm -rf ibex.tar.gz ibex etc
+rm -rf ibex && cp ../ibex . && docker build -t ibex:${tag} .
 
-# handle binary
-cp ../ibex . && chmod +x ibex
+docker tag ibex:${tag} ulric2019/ibex:${tag}
+docker push ulric2019/ibex:${tag}
 
-# handle configuration
-cp -r ../etc .
-sed -i 's/127.0.0.1:3306/mysql:3306/g' ./etc/server.conf
-sed -i 's/127.0.0.1:5432/postgres:5432/g' ./etc/server.conf
-sed -i 's/127.0.0.1:20090/ibex:20090/g' ./etc/agentd.conf
-
-# make tarball and delete tmp files
-tar zcvf ibex.tar.gz ibex etc && rm -rf ibex etc
-
-docker build -t ibex:${tag} .
