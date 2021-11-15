@@ -58,7 +58,9 @@ func heartbeat() {
 		}
 	}
 
-	log.Println("D: assigned tasks:", mapKeys(assigned))
+	if len(assigned) > 0 {
+		log.Println("D: assigned tasks:", mapKeys(assigned))
+	}
 
 	Locals.Clean(assigned)
 }
