@@ -238,12 +238,11 @@ func (t *Task) start() {
 		cmd.Dir = loginUser.HomeDir
 	}
 
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	cmd.Stdout = &t.Stdout
 	cmd.Stderr = &t.Stderr
 	t.Cmd = cmd
 
-	err = cmd.Start()
+	err = CmdStart(cmd)
 	if err != nil {
 		log.Printf("E: cannot start cmd of task[%d]: %v", t.Id, err)
 		return
