@@ -9,7 +9,6 @@ import (
 	"path"
 	"strings"
 	"sync"
-	"syscall"
 
 	"github.com/toolkits/pkg/file"
 	"github.com/toolkits/pkg/runner"
@@ -298,7 +297,7 @@ func killProcess(t *Task) {
 
 	log.Printf("D: begin kill process of task[%d]", t.Id)
 
-	err := syscall.Kill(-t.Cmd.Process.Pid, syscall.SIGKILL)
+	err := CmdKill(t.Cmd)
 	if err != nil {
 		t.SetStatus("killfailed")
 		log.Printf("D: kill process of task[%d] fail: %v", t.Id, err)
