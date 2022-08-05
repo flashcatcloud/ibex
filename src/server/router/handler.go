@@ -336,9 +336,9 @@ func taskAdd(c *gin.Context) {
 
 	err := task.Save(hosts, f.Action)
 	if err != nil {
-		logger.Infof("task_create_succ: authUser=%s title=%s", authUser, task.Title)
-	} else {
 		logger.Infof("task_create_fail: authUser=%s title=%s", authUser, task.Title)
+	} else {
+		logger.Infof("task_create_succ: authUser=%s title=%s", authUser, task.Title)
 	}
 
 	ginx.NewRender(c).Data(task.Id, err)
