@@ -5,13 +5,11 @@ import (
 	"log"
 	"net"
 	"os"
-	"path"
 	"strings"
 	"sync"
 
 	"github.com/koding/multiconfig"
 	"github.com/toolkits/pkg/file"
-	"github.com/toolkits/pkg/runner"
 
 	"github.com/ulricqin/ibex/src/pkg/httpx"
 )
@@ -87,8 +85,13 @@ func MustLoad(fpaths ...string) {
 			C.MetaDir = "./meta"
 		}
 
-		C.MetaDir = path.Join(runner.Cwd, C.MetaDir)
+		C.MetaDir, err = file.RealPath(C.MetaDir)
+		if err != nil {
+			log.Println("E: failed to get real path of MetaDir:", err)
+			os.Exit(1)
+		}
 		file.EnsureDir(C.MetaDir)
+		file.EnsureDirRW(C.MetaDir)
 	})
 }
 
