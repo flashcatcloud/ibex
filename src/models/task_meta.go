@@ -105,9 +105,9 @@ func (m *TaskMeta) CleanFields() error {
 		return fmt.Errorf("arg(script) is required")
 	}
 
-	if str.Dangerous(m.Args) {
-		return fmt.Errorf("arg(args) is dangerous")
-	}
+	// if str.Dangerous(m.Args) {
+	// 	return fmt.Errorf("arg(args) is dangerous")
+	// }
 
 	if str.Dangerous(m.Pause) {
 		return fmt.Errorf("arg(pause) is dangerous")
