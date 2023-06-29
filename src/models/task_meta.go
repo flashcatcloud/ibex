@@ -20,6 +20,7 @@ type TaskMeta struct {
 	Pause     string    `json:"pause"`
 	Script    string    `json:"script"`
 	Args      string    `json:"args"`
+	EventTags string    `json:"event_tags"`
 	Creator   string    `json:"creator"`
 	Created   time.Time `json:"created" gorm:"->"`
 	Done      bool      `json:"done" gorm:"-"`

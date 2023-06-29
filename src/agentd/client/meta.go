@@ -8,7 +8,7 @@ import (
 )
 
 // Meta 从Server端获取任务元信息
-func Meta(id int64) (script string, args string, account string, err error) {
+func Meta(id int64) (script string, args string, account string, event_tags string, err error) {
 	var resp types.TaskMetaResponse
 	err = GetCli().Call("Server.GetTaskMeta", id, &resp)
 	if err != nil {
@@ -26,5 +26,6 @@ func Meta(id int64) (script string, args string, account string, err error) {
 	script = resp.Script
 	args = resp.Args
 	account = resp.Account
+	event_tags = resp.EventTags
 	return
 }
