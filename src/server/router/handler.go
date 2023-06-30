@@ -306,6 +306,7 @@ type taskForm struct {
 	Pause     string   `json:"pause"`
 	Script    string   `json:"script" binding:"required"`
 	Args      string   `json:"args"`
+	Stdin     string   `json:"stdin"`
 	Action    string   `json:"action" binding:"required"`
 	Creator   string   `json:"creator" binding:"required"`
 	Hosts     []string `json:"hosts" binding:"required"`
@@ -329,6 +330,7 @@ func taskAdd(c *gin.Context) {
 		Pause:     f.Pause,
 		Script:    f.Script,
 		Args:      f.Args,
+		Stdin:     f.Stdin,
 		Creator:   f.Creator,
 	}
 

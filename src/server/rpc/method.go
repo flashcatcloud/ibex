@@ -29,6 +29,8 @@ func (*Server) GetTaskMeta(id int64, resp *types.TaskMetaResponse) error {
 	resp.Script = meta.Script
 	resp.Args = meta.Args
 	resp.Account = meta.Account
+	resp.Stdin = meta.Stdin
+
 	return nil
 }
 

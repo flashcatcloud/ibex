@@ -5,6 +5,7 @@ type TaskMetaResponse struct {
 	Script  string
 	Args    string
 	Account string
+	Stdin   string
 }
 
 type ReportTask struct {
