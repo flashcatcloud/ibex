@@ -2,7 +2,6 @@ package timer
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"log"
 	"os/exec"
@@ -210,27 +209,7 @@ func (t *Task) prepare() error {
 		t.StdinStr = stdin
 	}
 
-	stdinArr := strings.Split(t.StdinStr, ",,")
-	stdinMap := make(map[string]string)
-	for i := 0; i < len(stdinArr); i++ {
-		pair := strings.TrimSpace(stdinArr[i])
-		if pair == "" {
-			continue
-		}
-
-		arr := strings.Split(pair, "=")
-		if len(arr) != 2 {
-			continue
-		}
-
-		stdinMap[arr[0]] = arr[1]
-	}
-	stdin, err := json.Marshal(stdinMap)
-	if err != nil {
-		log.Printf("E: failed to marshal stdin to json: %v", stdinMap)
-		return err
-	}
-	t.Stdin = bytes.NewReader(stdin)
+	t.Stdin = bytes.NewReader([]byte(t.StdinStr))
 
 	return nil
 }
