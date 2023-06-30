@@ -26,6 +26,6 @@ func Meta(id int64) (script string, args string, account string, stdin string, e
 	script = resp.Script
 	args = resp.Args
 	account = resp.Account
-	stdin = resp.EventTags
+	stdin = resp.Stdin
 	return
 }
