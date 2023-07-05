@@ -10,8 +10,8 @@ else
  endif
 endif
 
-APP_BIN = ibex
-APP_VER = 1.0.0
+APP_BIN=ibex
+APP_VER=1.0.0
 
 all: build
 
