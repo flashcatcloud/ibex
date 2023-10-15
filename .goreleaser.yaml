@@ -49,7 +49,7 @@ archives:
     format_overrides:
       - goos: windows
         format: zip
-    name_template: "{{ .ProjectName }}-v{{ .Version }}-{{ .Os }}-{{ .Arch }}-with-cgo-plugin"
+    name_template: "{{ .ProjectName }}-v{{ .Version }}-{{ .Os }}-{{ .Arch }}"
     wrap_in_directory: true
     files:
       - etc/*
