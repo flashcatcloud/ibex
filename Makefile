@@ -11,12 +11,12 @@ else
 endif
 
 APP_BIN=ibex
-APP_VER=1.0.0
+APP_VER=0.5.0
 
 all: build
 
 build:
-	CGO_ENABLED=0 GOOS=${PLATFORM} GOARCH=amd64 go build -ldflags "-w -s -X main.VERSION=$(APP_VER)" -o $(APP_BIN) ./src/cmd
+	CGO_ENABLED=0 go build -ldflags "-w -s -X main.VERSION=$(APP_VER)" -o $(APP_BIN) ./src/cmd
 
 start_server:
 	./$(APP_BIN) server -c ./etc/server.conf

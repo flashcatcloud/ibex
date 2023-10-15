@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/toolkits/pkg/net/tcpx"
 	"github.com/toolkits/pkg/runner"
 	"github.com/ulricqin/ibex/src/agentd"
 	"github.com/ulricqin/ibex/src/server"
@@ -38,6 +39,8 @@ func newServerCmd() *cli.Command {
 		},
 		Action: func(c *cli.Context) error {
 			printEnv()
+
+			tcpx.WaitHosts()
 
 			var opts []server.ServerOption
 			if c.String("conf") != "" {
