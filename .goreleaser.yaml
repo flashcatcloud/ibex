@@ -1,0 +1,103 @@
+before:
+  hooks:
+    # You may remove this if you don't use go modules.
+    - go mod tidy
+
+snapshot:
+  name_template: '{{ .Tag }}'
+checksum:
+  name_template: 'checksums.txt'
+changelog:
+  skip: true
+
+builds:
+  - id: linux
+    main: ./src/cmd
+    binary: ibex
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - arm64
+      - amd64
+    ldflags:
+      - -s -w
+      - -X github.com/ulricqin/ibex/main.Version={{ .Tag }}-{{.Commit}}
+
+  - id: windows
+    main: ./src/cmd
+    binary: ibex
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X github.com/ulricqin/ibex/main.Version={{ .Tag }}-{{.Commit}}
+
+archives:
+  - id: ibex
+    rlcp: true
+    builds:
+      - linux
+      - windows
+    format: tar.gz
+    format_overrides:
+      - goos: windows
+        format: zip
+    name_template: "{{ .ProjectName }}-v{{ .Version }}-{{ .Os }}-{{ .Arch }}-with-cgo-plugin"
+    wrap_in_directory: true
+    files:
+      - etc/*
+
+
+release:
+  github:
+    owner: flashcatcloud
+    name: ibex
+  name_template: "v{{ .Version }}"
+
+dockers:
+  - image_templates:
+      - flashcatcloud/ibex:{{ .Tag }}-amd64
+    goos: linux
+    goarch: amd64
+    ids:
+      - linux
+    dockerfile: docker/Dockerfile.goreleaser
+    extra_files:
+      - etc/agentd.conf
+      - etc/server.conf
+    use: buildx
+    build_flag_templates:
+      - "--platform=linux/amd64"
+
+  - image_templates:
+      - flashcatcloud/ibex:{{ .Tag }}-arm64v8
+    goos: linux
+    goarch: arm64
+    ids:
+      - linux
+    dockerfile: docker/Dockerfile.goreleaser
+    extra_files:
+      - etc/agentd.conf
+      - etc/server.conf
+    use: buildx
+    build_flag_templates:
+      - "--platform=linux/arm64/v8"
+
+docker_manifests:
+  - name_template: flashcatcloud/ibex:{{ .Tag }}
+    image_templates:
+      - flashcatcloud/ibex:{{ .Tag }}-amd64
+      - flashcatcloud/ibex:{{ .Tag }}-arm64v8
+
+  - name_template: flashcatcloud/ibex:latest
+    image_templates:
+      - flashcatcloud/ibex:{{ .Tag }}-amd64
+      - flashcatcloud/ibex:{{ .Tag }}-arm64v8
+
