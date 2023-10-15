@@ -3,6 +3,10 @@
 
 package timer
 
+import (
+	"os/exec"
+)
+
 func CmdStart(cmd *exec.Cmd) error {
 	return cmd.Start()
 }
