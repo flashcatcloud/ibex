@@ -30,8 +30,7 @@ archives:
   - id: ibex
     rlcp: true
     builds:
-      - linux
-      - windows
+      - build
     format: tar.gz
     format_overrides:
       - goos: windows
