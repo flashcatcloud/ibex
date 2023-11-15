@@ -45,12 +45,18 @@ type Postgres struct {
 	Password string
 	DBName   string
 	SSLMode  string
+	Schema   string
 }
 
 func (a Postgres) DSN() string {
 	arr := strings.Split(a.Address, ":")
 	if len(arr) != 2 {
 		panic("pg address(" + a.Address + ") invalid")
+	}
+
+	if a.Schema != "" {
+		return fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=%s search_path=%s",
+			arr[0], arr[1], a.User, a.DBName, a.Password, a.SSLMode, a.Schema)
 	}
 
 	return fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=%s",
