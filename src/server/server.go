@@ -104,11 +104,7 @@ func (s Server) initialize() (func(), error) {
 	cache.InitMemoryCache(time.Hour)
 
 	// init database
-	if err = storage.InitDB(storage.Config{
-		Gorm:     config.C.Gorm,
-		MySQL:    config.C.MySQL,
-		Postgres: config.C.Postgres,
-	}); err != nil {
+	if err = storage.InitDB(config.C.DB); err != nil {
 		return fns.Ret(), err
 	}
 

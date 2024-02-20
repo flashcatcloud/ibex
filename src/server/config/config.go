@@ -2,17 +2,18 @@ package config
 
 import (
 	"fmt"
+
 	"net"
 	"os"
 	"strings"
 	"sync"
 
-	"github.com/gin-gonic/gin"
-	"github.com/koding/multiconfig"
-
 	"github.com/ulricqin/ibex/src/pkg/httpx"
 	"github.com/ulricqin/ibex/src/pkg/logx"
-	"github.com/ulricqin/ibex/src/storage"
+	"github.com/ulricqin/ibex/src/pkg/ormx"
+
+	"github.com/gin-gonic/gin"
+	"github.com/koding/multiconfig"
 )
 
 var (
@@ -93,9 +94,7 @@ type Config struct {
 	Log       logx.Config
 	HTTP      httpx.Config
 	BasicAuth gin.Accounts
-	Gorm      storage.Gorm
-	MySQL     storage.MySQL
-	Postgres  storage.Postgres
+	DB        ormx.DBConfig
 }
 
 type RPC struct {
