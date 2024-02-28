@@ -346,7 +346,7 @@ func taskAdd(c *gin.Context) {
 			Status: "running",
 		}
 		if err = taskHost.Create(); err != nil {
-			logger.Warning("task_host_create_fail: authUser=%s title=%s err=%s", authUser, meta.Title, err.Error())
+			logger.Warningf("task_host_create_fail: authUser=%s title=%s err=%s", authUser, meta.Title, err.Error())
 		}
 	} else {
 		err = meta.Save(hosts, f.Action)
@@ -506,10 +506,16 @@ type sqlCondForm struct {
 	Args  []interface{}
 }
 
-func tableRecordList(c *gin.Context) {
+func tableRecordListGet(c *gin.Context) {
 	var f sqlCondForm
 	ginx.BindJSON(c, &f)
-	ginx.NewRender(c).Data(models.DBRecordList(f.Table, f.Where, f.Args))
+	switch f.Table {
+	case models.TaskHostDoing{}.TableName():
+		lst, err := models.DBRecordList[[]models.TaskHostDoing](f.Table, f.Where, f.Args)
+		ginx.NewRender(c).Data(lst, err)
+	default:
+		ginx.Bomb(http.StatusBadRequest, "table[%v] not support", f.Table)
+	}
 }
 
 func tableRecordCount(c *gin.Context) {

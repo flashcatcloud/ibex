@@ -78,7 +78,7 @@ func configRoute(r *gin.Engine, version string) {
 		api.GET("/task/:id/stderr.json", taskStderrJSON)
 
 		// api for edge server
-		api.POST("/record/list", tableRecordList)
+		api.POST("/record/list", tableRecordListGet)
 		api.POST("/record/count", tableRecordCount)
 		api.POST("/mark/done", markDone)
 		api.POST("/task/host/", taskHostAdd)
