@@ -31,12 +31,12 @@ func New(version string) *gin.Engine {
 		r.Use(loggerMid)
 	}
 
-	configRoute(r, version)
+	ConfigRouter(r, version)
 
 	return r
 }
 
-func configRoute(r *gin.Engine, version string) {
+func ConfigRouter(r *gin.Engine, version ...string) {
 	if config.C.HTTP.PProf {
 		pprof.Register(r, "/debug/pprof")
 	}
@@ -53,9 +53,11 @@ func configRoute(r *gin.Engine, version string) {
 		c.String(200, c.Request.RemoteAddr)
 	})
 
-	r.GET("/version", func(c *gin.Context) {
-		c.String(200, version)
-	})
+	if len(version) > 0 {
+		r.GET("/version", func(c *gin.Context) {
+			c.String(200, version[0])
+		})
+	}
 
 	api := r.Group("/ibex/v1", gin.BasicAuth(config.C.BasicAuth))
 	{
@@ -83,6 +85,5 @@ func configRoute(r *gin.Engine, version string) {
 		api.POST("/mark/done", markDone)
 		api.POST("/task/host/", taskHostAdd)
 		api.POST("/task/hosts/upsert", taskHostUpsert)
-
 	}
 }
