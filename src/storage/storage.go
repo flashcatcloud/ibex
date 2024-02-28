@@ -1,8 +1,7 @@
 package storage
 
 import (
-	"github.com/ulricqin/ibex/src/pkg/ormx"
-
+	"github.com/ccfos/nightingale/v6/pkg/ormx"
 	"gorm.io/gorm"
 )
 
