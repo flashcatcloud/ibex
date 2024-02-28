@@ -3,14 +3,11 @@ package server
 import (
 	"context"
 	"fmt"
+	"github.com/toolkits/pkg/i18n"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"syscall"
-	"time"
-
-	"github.com/toolkits/pkg/cache"
-	"github.com/toolkits/pkg/i18n"
 
 	"github.com/ulricqin/ibex/src/pkg/httpx"
 	"github.com/ulricqin/ibex/src/pkg/logx"
@@ -41,7 +38,7 @@ func SetVersion(v string) ServerOption {
 }
 
 // Run run server
-func Run(opts ...ServerOption) {
+func Run(isCenter bool, opts ...ServerOption) {
 	code := 1
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
@@ -54,6 +51,10 @@ func Run(opts ...ServerOption) {
 	for _, opt := range opts {
 		opt(&server)
 	}
+
+	// parse config file
+	config.MustLoad(server.ConfigFile)
+	config.C.IsCenter = isCenter
 
 	cleanFunc, err := server.initialize()
 	if err != nil {
@@ -86,9 +87,6 @@ func (s Server) initialize() (func(), error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	fns.Add(cancel)
 
-	// parse config file
-	config.MustLoad(s.ConfigFile)
-
 	// init i18n
 	i18n.Init()
 
@@ -101,7 +99,6 @@ func (s Server) initialize() (func(), error) {
 	}
 
 	// agentd pull task meta, which can be cached
-	cache.InitMemoryCache(time.Hour)
 
 	// init database
 	if err = storage.InitDB(config.C.DB); err != nil {
@@ -109,10 +106,12 @@ func (s Server) initialize() (func(), error) {
 	}
 
 	timer.CacheHostDoing()
-	go timer.Heartbeat()
-	go timer.Schedule()
-	go timer.CleanLong()
-
+	timer.ReportResult()
+	if config.C.IsCenter {
+		go timer.Heartbeat()
+		go timer.Schedule()
+		go timer.CleanLong()
+	}
 	// init http server
 	r := router.New(s.Version)
 	httpClean := httpx.Init(config.C.HTTP, ctx, r)

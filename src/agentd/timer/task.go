@@ -35,6 +35,8 @@ type Task struct {
 	Args     string
 	Account  string
 	StdinStr string
+
+	AlertTriggered bool
 }
 
 func (t *Task) SetStatus(status string) {

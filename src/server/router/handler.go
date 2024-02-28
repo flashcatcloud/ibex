@@ -298,18 +298,19 @@ func taskStderrJSON(c *gin.Context) {
 }
 
 type taskForm struct {
-	Title     string   `json:"title" binding:"required"`
-	Account   string   `json:"account" binding:"required"`
-	Batch     int      `json:"batch"`
-	Tolerance int      `json:"tolerance"`
-	Timeout   int      `json:"timeout"`
-	Pause     string   `json:"pause"`
-	Script    string   `json:"script" binding:"required"`
-	Args      string   `json:"args"`
-	Stdin     string   `json:"stdin"`
-	Action    string   `json:"action" binding:"required"`
-	Creator   string   `json:"creator" binding:"required"`
-	Hosts     []string `json:"hosts" binding:"required"`
+	Title          string   `json:"title" binding:"required"`
+	Account        string   `json:"account" binding:"required"`
+	Batch          int      `json:"batch"`
+	Tolerance      int      `json:"tolerance"`
+	Timeout        int      `json:"timeout"`
+	Pause          string   `json:"pause"`
+	Script         string   `json:"script" binding:"required"`
+	Args           string   `json:"args"`
+	Stdin          string   `json:"stdin"`
+	Action         string   `json:"action" binding:"required"`
+	Creator        string   `json:"creator" binding:"required"`
+	Hosts          []string `json:"hosts" binding:"required"`
+	AlertTriggered bool     `json:"alert_triggered"`
 }
 
 func taskAdd(c *gin.Context) {
@@ -321,7 +322,7 @@ func taskAdd(c *gin.Context) {
 		errorx.Bomb(http.StatusBadRequest, "arg(hosts) empty")
 	}
 
-	task := &models.TaskMeta{
+	meta := &models.TaskMeta{
 		Title:     f.Title,
 		Account:   f.Account,
 		Batch:     f.Batch,
@@ -335,15 +336,26 @@ func taskAdd(c *gin.Context) {
 	}
 
 	authUser := c.MustGet(gin.AuthUserKey).(string)
-
-	err := task.Save(hosts, f.Action)
-	if err != nil {
-		logger.Infof("task_create_fail: authUser=%s title=%s err=%s", authUser, task.Title, err.Error())
+	var err error
+	if f.AlertTriggered {
+		err = meta.Cache(hosts[0])
+		ginx.Dangerous(err)
+		taskHost := models.TaskHost{
+			Id:     meta.Id,
+			Host:   hosts[0],
+			Status: "running",
+		}
+		if err = taskHost.Create(); err != nil {
+			logger.Warning("task_host_create_fail: authUser=%s title=%s err=%s", authUser, meta.Title, err.Error())
+		}
 	} else {
-		logger.Infof("task_create_succ: authUser=%s title=%s", authUser, task.Title)
+		err = meta.Save(hosts, f.Action)
+		ginx.Dangerous(err)
 	}
 
-	ginx.NewRender(c).Data(task.Id, err)
+	logger.Infof("task_add_succ: authUser=%s title=%s", authUser, meta.Title)
+
+	ginx.NewRender(c).Data(meta.Id, err)
 }
 
 func taskGet(c *gin.Context) {
@@ -486,4 +498,49 @@ func noopWhenDone(id int64) {
 	if action == nil {
 		errorx.Bomb(200, "task already finished, no more action can do")
 	}
+}
+
+type sqlCondForm struct {
+	Table string
+	Where string
+	Args  []interface{}
+}
+
+func tableRecordList(c *gin.Context) {
+	var f sqlCondForm
+	ginx.BindJSON(c, &f)
+	ginx.NewRender(c).Data(models.DBRecordList(f.Table, f.Where, f.Args))
+}
+
+func tableRecordCount(c *gin.Context) {
+	var f sqlCondForm
+	ginx.BindJSON(c, &f)
+	ginx.NewRender(c).Data(models.DBRecordCount(f.Table, f.Where, f.Args))
+}
+
+type markDoneForm struct {
+	Id     int64
+	Clock  int64
+	Host   string
+	Status string
+	Stdout string
+	Stderr string
+}
+
+func markDone(c *gin.Context) {
+	var f markDoneForm
+	ginx.BindJSON(c, &f)
+	ginx.NewRender(c).Message(models.MarkDoneStatus(f.Id, f.Clock, f.Host, f.Status, f.Stdout, f.Stderr))
+}
+
+func taskHostAdd(c *gin.Context) {
+	var f models.TaskHost
+	ginx.BindJSON(c, &f)
+	ginx.NewRender(c).Message(f.Upsert())
+}
+
+func taskHostUpsert(c *gin.Context) {
+	var f []models.TaskHost
+	ginx.BindJSON(c, &f)
+	ginx.NewRender(c).Message(models.UpsertTaskHostList(f))
 }

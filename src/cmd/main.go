@@ -47,11 +47,23 @@ func newServerCmd() *cli.Command {
 				opts = append(opts, server.SetConfigFile(c.String("conf")))
 			}
 			opts = append(opts, server.SetVersion(VERSION))
+			// parse config file
 
-			server.Run(opts...)
+			server.Run(true, opts...)
 			return nil
 		},
 	}
+}
+
+func NewEdgeServerCmd() {
+	printEnv()
+
+	tcpx.WaitHosts()
+
+	var opts []server.ServerOption
+	opts = append(opts, server.SetVersion(VERSION))
+
+	server.Run(false, opts...)
 }
 
 func newAgentdCmd() *cli.Command {

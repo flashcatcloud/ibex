@@ -1,17 +1,93 @@
 package models
 
 import (
+	"context"
+	"fmt"
+	"github.com/toolkits/pkg/logger"
+	"github.com/ulricqin/ibex/src/pkg/poster"
+	"github.com/ulricqin/ibex/src/server/config"
+	"github.com/ulricqin/ibex/src/storage"
+	"gorm.io/gorm/clause"
 	"time"
 
 	"gorm.io/gorm"
 )
 
 type TaskHost struct {
-	Id     int64  `json:"id" gorm:"primaryKey"`
+	Id     int64  `json:"id"`
 	Host   string `json:"host"`
 	Status string `json:"status"`
 	Stdout string `json:"stdout"`
 	Stderr string `json:"stderr"`
+}
+
+func (t TaskHost) Upsert() error {
+	return DB().Table(tht(t.Id)).Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "id"}, {Name: "host"}},
+		DoUpdates: clause.AssignmentColumns([]string{"status", "stdout", "stderr"}),
+	}).Create(t).Error
+}
+
+func (t TaskHost) Create() error {
+	if config.C.IsCenter {
+		return DB().Table(tht(t.Id)).Create(t).Error
+	}
+	return poster.PostByUrls(config.C.CenterApi, "/ibex/v1/task/host", t)
+}
+
+func UpsertTaskHostList(lst []TaskHost) map[string]error {
+	if len(lst) == 0 {
+		return nil
+	}
+
+	errs := make(map[string]error, 0)
+	for _, th := range lst {
+		if err := th.Upsert(); err != nil {
+			errs[fmt.Sprintf("%d:%s", th.Id, th.Host)] = err
+		}
+	}
+	return errs
+}
+
+func taskHostCacheKey(id int64, host string) string {
+	return fmt.Sprintf("task:host:%d:%s", id, host)
+}
+
+func ReportCacheResult(ctx context.Context) error {
+	iter := storage.Cache.Scan(ctx, 0, "task:host:*", 0).Iterator()
+	keys := make([]string, 0)
+	for iter.Next(ctx) {
+		keys = append(keys, iter.Val())
+	}
+	if err := iter.Err(); err != nil {
+		return err
+	}
+
+	taskHostList := make([]TaskHost, 0, len(keys))
+	if err := storage.Cache.MGet(ctx, keys...).Scan(&taskHostList); err != nil {
+		return err
+	}
+
+	dones := make([]TaskHost, 0)
+	for _, task := range taskHostList {
+		if task.Status != "running" {
+			dones = append(dones, task)
+		}
+	}
+	if len(dones) == 0 {
+		return nil
+	}
+	var errs map[string]error
+	if config.C.IsCenter {
+		errs = UpsertTaskHostList(dones)
+	} else {
+		errs, _ = poster.PostByUrlsWithResp[map[string]error](config.C.CenterApi, "/ibex/v1/task/hosts/upsert", dones)
+	}
+
+	for key, err := range errs {
+		logger.Warning("report cache[%s] result error: %s", key, err.Error())
+	}
+	return nil
 }
 
 func TaskHostGet(id int64, host string) (*TaskHost, error) {
@@ -28,32 +104,52 @@ func TaskHostGet(id int64, host string) (*TaskHost, error) {
 	return ret[0], nil
 }
 
-func MarkDoneStatus(id, clock int64, host, status, stdout, stderr string) error {
-	count, err := DoingHostCount("id=? and host=? and clock=?", id, host, clock)
+func MarkDoneStatus(id, clock int64, host, status, stdout, stderr string, alertTriggered ...bool) error {
+	if len(alertTriggered) > 0 || alertTriggered[0] {
+		return CacheMarkDone(context.Background(), TaskHost{
+			Id:     id,
+			Host:   host,
+			Status: status,
+			Stdout: stdout,
+			Stderr: stderr,
+		})
+	}
+
+	if !config.C.IsCenter {
+		return poster.PostByUrls(config.C.CenterApi, "/ibex/v1/mark/done", map[string]interface{}{
+			"id":     id,
+			"clock":  host,
+			"host":   host,
+			"status": status,
+			"stdout": stdout,
+			"stderr": stderr,
+		})
+	}
+
+	count, err := DBRecordCount(TaskHostDoing{}.TableName(), "id=? and host=? and clock=?", id, host, clock)
 	if err != nil {
 		return err
 	}
 
 	if count == 0 {
 		// 如果是timeout了，后来任务执行完成之后，结果又上来了，stdout和stderr最好还是存库，让用户看到
-		err = DB().Table(tht(id)).Where("id=? and host=? and status=?", id, host, "timeout").Count(&count).Error
+		count, err = DBRecordCount(tht(id), "id=? and host=? and status=?", id, host, "timeout")
 		if err != nil {
 			return err
 		}
 
 		if count == 1 {
-			return DB().Table(tht(id)).Where("id=? and host=?", id, host).Updates(map[string]interface{}{
+			return DBRecordUpdate(map[string]interface{}{
 				"status": status,
 				"stdout": stdout,
 				"stderr": stderr,
-			}).Error
+			}, tht(id), "id=? and host=?", id, host)
 		}
-
 		return nil
 	}
 
 	return DB().Transaction(func(tx *gorm.DB) error {
-		err = DB().Table(tht(id)).Where("id=? and host=?", id, host).Updates(map[string]interface{}{
+		err = tx.Table(tht(id)).Where("id=? and host=?", id, host).Updates(map[string]interface{}{
 			"status": status,
 			"stdout": stdout,
 			"stderr": stderr,
@@ -68,6 +164,16 @@ func MarkDoneStatus(id, clock int64, host, status, stdout, stderr string) error 
 
 		return nil
 	})
+}
+
+func CacheMarkDone(ctx context.Context, host TaskHost) error {
+	rtx := storage.Cache.TxPipeline()
+
+	rtx.Del(ctx, hostDoingCacheKey(host.Id, host.Host))
+	rtx.Set(ctx, taskHostCacheKey(host.Id, host.Host), host, storage.DEFAULT)
+
+	_, err := rtx.Exec(ctx)
+	return err
 }
 
 func WaitingHostList(id int64, limit ...int) ([]TaskHost, error) {

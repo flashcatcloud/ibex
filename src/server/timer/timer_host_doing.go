@@ -28,9 +28,12 @@ func loopCacheHostDoing() {
 }
 
 func cacheHostDoing() error {
-	lst, err := models.DoingHostList("")
+	var err error
+	var lst = make([]models.TaskHostDoing, 0)
+
+	lst, err = models.DBRecordList[[]models.TaskHostDoing](models.TaskHostDoing{}.TableName(), "")
 	if err != nil {
-		logger.Errorf("models.DoingHostList fail: %v", err)
+		logger.Errorf("models.DBRecordList fail: %v", err)
 		return err
 	}
 
@@ -41,6 +44,6 @@ func cacheHostDoing() error {
 		set[lst[i].Host] = append(set[lst[i].Host], lst[i])
 	}
 
-	models.SetDoingCache(set)
+	models.SetDoingLocalCache(set)
 	return nil
 }

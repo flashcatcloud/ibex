@@ -91,6 +91,8 @@ type Config struct {
 	RPC       RPC
 	Heartbeat Heartbeat
 	Output    Output
+	IsCenter  bool
+	CenterApi CenterApi
 	Log       logx.Config
 	HTTP      httpx.Config
 	BasicAuth gin.Accounts
@@ -110,6 +112,13 @@ type Heartbeat struct {
 type Output struct {
 	ComeFrom string
 	AgtdPort int
+}
+
+type CenterApi struct {
+	Addrs         []string
+	BasicAuthUser string
+	BasicAuthPass string
+	Timeout       int64
 }
 
 func (c *Config) IsDebugMode() bool {

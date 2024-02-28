@@ -15,7 +15,7 @@ var Locals = &LocalTasksT{M: make(map[int64]*Task)}
 func (lt *LocalTasksT) ReportTasks() []types.ReportTask {
 	ret := make([]types.ReportTask, 0, len(lt.M))
 	for id, t := range lt.M {
-		rt := types.ReportTask{Id: id, Clock: t.Clock}
+		rt := types.ReportTask{Id: id, Clock: t.Clock, AlertTriggered: t.AlertTriggered}
 
 		rt.Status = t.GetStatus()
 		if rt.Status == "running" || rt.Status == "killing" {
@@ -71,9 +71,10 @@ func (lt *LocalTasksT) AssignTask(at types.AssignTask) {
 			return
 		}
 		local = &Task{
-			Id:     at.Id,
-			Clock:  at.Clock,
-			Action: at.Action,
+			Id:             at.Id,
+			Clock:          at.Clock,
+			Action:         at.Action,
+			AlertTriggered: at.AlertTriggered,
 		}
 		lt.SetTask(local)
 

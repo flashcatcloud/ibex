@@ -43,13 +43,28 @@ func (*Server) Report(req types.ReportRequest, resp *types.ReportResponse) error
 		}
 	}
 
-	hosts := models.GetDoingCache(req.Ident)
-	l := len(hosts)
-	tasks := make([]types.AssignTask, l)
-	for i := 0; i < l; i++ {
-		tasks[i].Id = hosts[i].Id
-		tasks[i].Clock = hosts[i].Clock
-		tasks[i].Action = hosts[i].Action
+	lhosts := models.GetDoingLocalCache(req.Ident)
+	rhosts, err := models.GetDoingRedisCache(req.Ident)
+	if err != nil {
+		logger.Warning("cannot get host doing tasks from redis, ident:%s, error:%v", req.Ident, err)
+	}
+
+	tasks := make([]types.AssignTask, 0, len(lhosts)+len(rhosts))
+	for _, h := range lhosts {
+		tasks = append(tasks, types.AssignTask{
+			Id:             h.Id,
+			Clock:          h.Clock,
+			Action:         h.Action,
+			AlertTriggered: false,
+		})
+	}
+	for _, h := range rhosts {
+		tasks = append(tasks, types.AssignTask{
+			Id:             h.Id,
+			Clock:          h.Clock,
+			Action:         h.Action,
+			AlertTriggered: true,
+		})
 	}
 
 	resp.AssignTasks = tasks
@@ -60,7 +75,7 @@ func handleDoneTask(req types.ReportRequest) error {
 	count := len(req.ReportTasks)
 	for i := 0; i < count; i++ {
 		t := req.ReportTasks[i]
-		err := models.MarkDoneStatus(t.Id, t.Clock, req.Ident, t.Status, t.Stdout, t.Stderr)
+		err := models.MarkDoneStatus(t.Id, t.Clock, req.Ident, t.Status, t.Stdout, t.Stderr, t.AlertTriggered)
 		if err != nil {
 			logger.Errorf("cannot mark task done, id:%d, hostname:%s, clock:%d, status:%s", t.Id, req.Ident, t.Clock, t.Status)
 			return err

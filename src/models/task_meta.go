@@ -1,7 +1,9 @@
 package models
 
 import (
+	"context"
 	"fmt"
+	"github.com/ulricqin/ibex/src/storage"
 	"strings"
 	"time"
 
@@ -30,8 +32,8 @@ func (TaskMeta) TableName() string {
 	return "task_meta"
 }
 
-func taskMetaCacheKey(k string) string {
-	return fmt.Sprintf("/cache/task/meta/%s", k)
+func taskMetaCacheKey(id int64) string {
+	return fmt.Sprintf("cache:task:meta:%d", id)
 }
 
 func TaskMetaGet(where string, args ...interface{}) (*TaskMeta, error) {
@@ -49,13 +51,13 @@ func TaskMetaGet(where string, args ...interface{}) (*TaskMeta, error) {
 }
 
 // TaskMetaGet 根据ID获取任务元信息，会用到内存缓存
-func TaskMetaGetByID(id interface{}) (*TaskMeta, error) {
-	var obj TaskMeta
-	if err := cache.Get(taskMetaCacheKey(fmt.Sprint(id)), &obj); err == nil {
-		return &obj, nil
+func TaskMetaGetByID(id int64) (*TaskMeta, error) {
+	meta, err := TaskMetaGetFromCache(id)
+	if err == nil {
+		return meta, nil
 	}
 
-	meta, err := TaskMetaGet("id=?", id)
+	meta, err = TaskMetaGet("id=?", id)
 	if err != nil {
 		return nil, err
 	}
@@ -64,9 +66,16 @@ func TaskMetaGetByID(id interface{}) (*TaskMeta, error) {
 		return nil, nil
 	}
 
-	cache.Set(taskMetaCacheKey(fmt.Sprint(id)), *meta, cache.DEFAULT)
+	_, err = storage.Cache.Set(context.Background(), fmt.Sprint(id), *meta, cache.DEFAULT).Result()
 
-	return meta, nil
+	return meta, err
+}
+
+func TaskMetaGetFromCache(id int64) (*TaskMeta, error) {
+	res := storage.Cache.Get(context.Background(), fmt.Sprint(id))
+	meta := new(TaskMeta)
+	err := res.Scan(meta)
+	return meta, err
 }
 
 func (m *TaskMeta) CleanFields() error {
@@ -123,6 +132,27 @@ func (m *TaskMeta) HandleFH(fh string) {
 		m.Title = m.Title[:i]
 	}
 	m.Title = m.Title + " FH: " + fh
+}
+
+func (m *TaskMeta) Cache(host string) error {
+	ctx := context.Background()
+
+	tx := storage.Cache.TxPipeline()
+	tx.Set(ctx, taskMetaCacheKey(m.Id), *m, storage.DEFAULT)
+	tx.Set(ctx, hostDoingCacheKey(m.Id, host), TaskHostDoing{
+		Id:     m.Id,
+		Host:   host,
+		Clock:  time.Now().Unix(),
+		Action: "start",
+	}, storage.DEFAULT)
+	tx.Set(ctx, taskHostCacheKey(m.Id, host), TaskHost{
+		Id:     m.Id,
+		Host:   host,
+		Status: "running",
+	}, storage.DEFAULT)
+	_, err := tx.Exec(ctx)
+
+	return err
 }
 
 func (m *TaskMeta) Save(hosts []string, action string) error {
