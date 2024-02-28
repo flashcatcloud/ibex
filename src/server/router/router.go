@@ -2,10 +2,10 @@ package router
 
 import (
 	"fmt"
+	"github.com/gin-contrib/pprof"
 	"os"
 	"strings"
 
-	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 
 	"github.com/ulricqin/ibex/src/pkg/aop"
@@ -31,12 +31,13 @@ func New(version string) *gin.Engine {
 		r.Use(loggerMid)
 	}
 
-	ConfigRouter(r, version)
+	configBaseRouter(r, version)
+	ConfigRouter(r)
 
 	return r
 }
 
-func ConfigRouter(r *gin.Engine, version ...string) {
+func configBaseRouter(r *gin.Engine, version string) {
 	if config.C.HTTP.PProf {
 		pprof.Register(r, "/debug/pprof")
 	}
@@ -53,12 +54,12 @@ func ConfigRouter(r *gin.Engine, version ...string) {
 		c.String(200, c.Request.RemoteAddr)
 	})
 
-	if len(version) > 0 {
-		r.GET("/version", func(c *gin.Context) {
-			c.String(200, version[0])
-		})
-	}
+	r.GET("/version", func(c *gin.Context) {
+		c.String(200, version)
+	})
+}
 
+func ConfigRouter(r *gin.Engine) {
 	api := r.Group("/ibex/v1", gin.BasicAuth(config.C.BasicAuth))
 	{
 		api.POST("/tasks", taskAdd)
