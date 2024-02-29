@@ -338,16 +338,26 @@ func taskAdd(c *gin.Context) {
 	authUser := c.MustGet(gin.AuthUserKey).(string)
 	var err error
 	if f.AlertTriggered {
+		// ToDO: 选择合适的方法，当网络不连通时，生成唯一的id，用于区分缓存中的task_meta和task_host_doing
+		// 防止边缘机房中不同任务的id相同；生成的id与数据库生成的id相同
+		// 一个思路是，利用时间戳生成id并借助redis防止同一个机房的不同n9e edge生成的id相同，生成id的数据不再存入数据库，只用于闭环执行
+		if err := meta.Create(); err != nil {
+			meta.Id = time.Now().UnixNano()
+		}
+		if err == nil {
+			t := models.TaskHost{
+				Id:     meta.Id,
+				Host:   hosts[0],
+				Status: "running",
+			}
+			if err = t.Create(); err != nil {
+				logger.Warningf("task_host_create_fail: authUser=%s title=%s err=%s", authUser, meta.Title, err.Error())
+			}
+		}
+
 		err = meta.Cache(hosts[0])
 		ginx.Dangerous(err)
-		taskHost := models.TaskHost{
-			Id:     meta.Id,
-			Host:   hosts[0],
-			Status: "running",
-		}
-		if err = taskHost.Create(); err != nil {
-			logger.Warningf("task_host_create_fail: authUser=%s title=%s err=%s", authUser, meta.Title, err.Error())
-		}
+
 	} else {
 		err = meta.Save(hosts, f.Action)
 		ginx.Dangerous(err)
@@ -537,6 +547,13 @@ func markDone(c *gin.Context) {
 	var f markDoneForm
 	ginx.BindJSON(c, &f)
 	ginx.NewRender(c).Message(models.MarkDoneStatus(f.Id, f.Clock, f.Host, f.Status, f.Stdout, f.Stderr))
+}
+
+func taskMetaAdd(c *gin.Context) {
+	var f models.TaskMeta
+	ginx.BindJSON(c, &f)
+	err := f.Create()
+	ginx.NewRender(c).Data(f.Id, err)
 }
 
 func taskHostAdd(c *gin.Context) {

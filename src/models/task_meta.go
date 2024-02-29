@@ -2,12 +2,14 @@ package models
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"github.com/ulricqin/ibex/src/pkg/poster"
+	"github.com/ulricqin/ibex/src/server/config"
 	"github.com/ulricqin/ibex/src/storage"
 	"strings"
 	"time"
 
-	"github.com/toolkits/pkg/cache"
 	"github.com/toolkits/pkg/str"
 	"gorm.io/gorm"
 )
@@ -32,8 +34,29 @@ func (TaskMeta) TableName() string {
 	return "task_meta"
 }
 
+func (meta *TaskMeta) MarshalBinary() ([]byte, error) {
+	return json.Marshal(meta)
+}
+
+func (meta *TaskMeta) UnmarshalBinary(data []byte) error {
+	return json.Unmarshal(data, meta)
+}
+
+func (meta *TaskMeta) Create() error {
+	if config.C.IsCenter {
+		return DB().Create(meta).Error
+	}
+
+	id, err := poster.PostByUrlsWithResp[int64](config.C.CenterApi, "/ibex/v1/task/meta", meta)
+	if err == nil {
+		meta.Id = id
+	}
+
+	return err
+}
+
 func taskMetaCacheKey(id int64) string {
-	return fmt.Sprintf("cache:task:meta:%d", id)
+	return fmt.Sprintf("task:meta:%d", id)
 }
 
 func TaskMetaGet(where string, args ...interface{}) (*TaskMeta, error) {
@@ -52,7 +75,7 @@ func TaskMetaGet(where string, args ...interface{}) (*TaskMeta, error) {
 
 // TaskMetaGet 根据ID获取任务元信息，会用到内存缓存
 func TaskMetaGetByID(id int64) (*TaskMeta, error) {
-	meta, err := TaskMetaGetFromCache(id)
+	meta, err := CacheTaskMetaGet(id)
 	if err == nil {
 		return meta, nil
 	}
@@ -66,13 +89,13 @@ func TaskMetaGetByID(id int64) (*TaskMeta, error) {
 		return nil, nil
 	}
 
-	_, err = storage.Cache.Set(context.Background(), fmt.Sprint(id), *meta, cache.DEFAULT).Result()
+	_, err = storage.Cache.Set(context.Background(), taskMetaCacheKey(id), meta, storage.DEFAULT).Result()
 
 	return meta, err
 }
 
-func TaskMetaGetFromCache(id int64) (*TaskMeta, error) {
-	res := storage.Cache.Get(context.Background(), fmt.Sprint(id))
+func CacheTaskMetaGet(id int64) (*TaskMeta, error) {
+	res := storage.Cache.Get(context.Background(), taskMetaCacheKey(id))
 	meta := new(TaskMeta)
 	err := res.Scan(meta)
 	return meta, err
@@ -138,14 +161,14 @@ func (m *TaskMeta) Cache(host string) error {
 	ctx := context.Background()
 
 	tx := storage.Cache.TxPipeline()
-	tx.Set(ctx, taskMetaCacheKey(m.Id), *m, storage.DEFAULT)
-	tx.Set(ctx, hostDoingCacheKey(m.Id, host), TaskHostDoing{
+	tx.Set(ctx, taskMetaCacheKey(m.Id), m, storage.DEFAULT)
+	tx.Set(ctx, hostDoingCacheKey(m.Id, host), &TaskHostDoing{
 		Id:     m.Id,
 		Host:   host,
 		Clock:  time.Now().Unix(),
 		Action: "start",
 	}, storage.DEFAULT)
-	tx.Set(ctx, taskHostCacheKey(m.Id, host), TaskHost{
+	tx.Set(ctx, taskHostCacheKey(m.Id, host), &TaskHost{
 		Id:     m.Id,
 		Host:   host,
 		Status: "running",

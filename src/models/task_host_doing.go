@@ -2,10 +2,8 @@ package models
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"github.com/ulricqin/ibex/src/pkg/poster"
-	"github.com/ulricqin/ibex/src/server/config"
-	"github.com/ulricqin/ibex/src/storage"
 	"sync"
 )
 
@@ -20,18 +18,16 @@ func (TaskHostDoing) TableName() string {
 	return "task_host_doing"
 }
 
-func hostDoingCacheKey(id int64, host string) string {
-	return fmt.Sprintf("host:doing:%s:%d", host, id)
+func (t *TaskHostDoing) MarshalBinary() ([]byte, error) {
+	return json.Marshal(t)
 }
 
-func DoingHostList(where string, args ...interface{}) (lst []TaskHostDoing, err error) {
-	if config.C.IsCenter {
-		err = DB().Where(where, args...).Find(&lst).Error
-	} else {
-		path := getSqlCountPath(TaskHostDoing{}.TableName(), where, args...)
-		lst, err = poster.GetByUrls[[]TaskHostDoing](config.C.CenterApi, path)
-	}
-	return
+func (t *TaskHostDoing) UnmarshalBinary(data []byte) error {
+	return json.Unmarshal(data, t)
+}
+
+func hostDoingCacheKey(id int64, host string) string {
+	return fmt.Sprintf("host:doing:%s:%d", host, id)
 }
 
 var (
@@ -54,16 +50,13 @@ func GetDoingLocalCache(host string) []TaskHostDoing {
 
 func GetDoingRedisCache(host string) ([]TaskHostDoing, error) {
 	ctx := context.Background()
-	iter := storage.Cache.Scan(ctx, 0, fmt.Sprintf("host:doing:%s", host), 0).Iterator()
-	keys := make([]string, 0)
-	for iter.Next(ctx) {
-		keys = append(keys, iter.Val())
-	}
-	if err := iter.Err(); err != nil {
+
+	keys, err := CacheKeyList(ctx, fmt.Sprintf("host:doing:%s", host))
+	if err != nil {
 		return nil, err
 	}
 
-	lst := make([]TaskHostDoing, 0, len(keys))
-	err := storage.Cache.MGet(ctx, keys...).Scan(&lst)
-	return nil, err
+	lst, err := CacheRecordList[TaskHostDoing](ctx, keys)
+
+	return lst, err
 }

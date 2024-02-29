@@ -106,7 +106,11 @@ func NewRedis(cfg RedisConfig) (Redis, error) {
 	return redisClient, nil
 }
 
-func CacheMGet(ctx context.Context, keys []string) [][]byte {
+func CacheMGet(ctx context.Context, keys ...string) [][]byte {
+	if len(keys) == 0 {
+		return [][]byte{}
+	}
+
 	var vals [][]byte
 	pipe := Cache.Pipeline()
 	for _, key := range keys {

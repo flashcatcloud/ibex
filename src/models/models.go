@@ -1,6 +1,8 @@
 package models
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/ulricqin/ibex/src/pkg/poster"
 	"github.com/ulricqin/ibex/src/server/config"
@@ -66,10 +68,25 @@ func DBRecordUpdate(values map[string]interface{}, table string, where string, a
 	return poster.PostByUrls(config.C.CenterApi, "/ibex/v1/record/update", values)
 }
 
-func getSqlCountPath(table, where string, args ...interface{}) string {
-	path := "/ibex/v1/sql/count"
-	path += "?where=" + where
-	path += "&args=" + fmt.Sprintf("%v", args)
-	path += "table=" + table
-	return path
+func CacheKeyList(ctx context.Context, prefix string) ([]string, error) {
+	iter := storage.Cache.Scan(ctx, 0, prefix, 0).Iterator()
+	keys := make([]string, 0)
+	for iter.Next(ctx) {
+		keys = append(keys, iter.Val())
+	}
+
+	return keys, iter.Err()
+}
+
+func CacheRecordList[T any](ctx context.Context, keys []string) ([]T, error) {
+	lst := make([]T, 0, len(keys))
+	values := storage.CacheMGet(ctx, keys...)
+	for _, val := range values {
+		t := new(T)
+		if err := json.Unmarshal(val, t); err != nil {
+			return nil, err
+		}
+		lst = append(lst, *t)
+	}
+	return lst, nil
 }

@@ -30,14 +30,14 @@ func (t *TaskHost) UnmarshalBinary(data []byte) error {
 	return json.Unmarshal(data, t)
 }
 
-func (t TaskHost) Upsert() error {
+func (t *TaskHost) Upsert() error {
 	return DB().Table(tht(t.Id)).Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "id"}, {Name: "host"}},
 		DoUpdates: clause.AssignmentColumns([]string{"status", "stdout", "stderr"}),
 	}).Create(t).Error
 }
 
-func (t TaskHost) Create() error {
+func (t *TaskHost) Create() error {
 	if config.C.IsCenter {
 		return DB().Table(tht(t.Id)).Create(t).Error
 	}
@@ -63,27 +63,18 @@ func taskHostCacheKey(id int64, host string) string {
 }
 
 func ReportCacheResult(ctx context.Context) error {
-	iter := storage.Cache.Scan(ctx, 0, "task:host:*", 0).Iterator()
-	keys := make([]string, 0)
-	for iter.Next(ctx) {
-		keys = append(keys, iter.Val())
-	}
-	if err := iter.Err(); err != nil {
+	keys, err := CacheKeyList(ctx, "task:host:*")
+	if err != nil {
 		return err
 	}
 
-	taskHostList := make([]TaskHost, 0, len(keys))
-	values := storage.CacheMGet(ctx, keys)
-	for _, val := range values {
-		th := TaskHost{}
-		if err := json.Unmarshal(val, &th); err != nil {
-			return err
-		}
-		taskHostList = append(taskHostList, th)
+	lst, err := CacheRecordList[TaskHost](ctx, keys)
+	if err != nil {
+		return err
 	}
 
 	dones := make([]TaskHost, 0)
-	for _, task := range taskHostList {
+	for _, task := range lst {
 		if task.Status != "running" {
 			dones = append(dones, task)
 		}
