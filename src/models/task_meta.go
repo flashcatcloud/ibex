@@ -60,17 +60,16 @@ func taskMetaCacheKey(id int64) string {
 }
 
 func TaskMetaGet(where string, args ...interface{}) (*TaskMeta, error) {
-	var arr []*TaskMeta
-	err := DB().Where(where, args...).Find(&arr).Error
+	lst, err := DBRecordList[[]*TaskMeta](TaskMeta{}.TableName(), where, args...)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(arr) == 0 {
+	if len(lst) == 0 {
 		return nil, nil
 	}
 
-	return arr[0], nil
+	return lst[0], nil
 }
 
 // TaskMetaGet 根据ID获取任务元信息，会用到内存缓存
