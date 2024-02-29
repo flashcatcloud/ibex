@@ -18,7 +18,7 @@ func CleanLong() {
 func cleanLongTask() {
 	ids, err := models.LongTaskIds()
 	if err != nil {
-		logger.Errorf("LongTaskIds:", err)
+		logger.Error("LongTaskIds:", err)
 		return
 	}
 

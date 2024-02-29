@@ -2,10 +2,10 @@ package timer
 
 import (
 	"fmt"
+	"github.com/toolkits/pkg/logger"
 	"os"
 	"time"
 
-	"github.com/toolkits/pkg/logger"
 	"github.com/ulricqin/ibex/src/models"
 )
 

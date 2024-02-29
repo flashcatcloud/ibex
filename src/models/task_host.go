@@ -144,11 +144,11 @@ func MarkDoneStatus(id, clock int64, host, status, stdout, stderr string, alertT
 		}
 
 		if count == 1 {
-			return DBRecordUpdate(map[string]interface{}{
+			return DB().Table(tht(id)).Where("id=? and host=?", id, host).Updates(map[string]interface{}{
 				"status": status,
 				"stdout": stdout,
 				"stderr": stderr,
-			}, tht(id), "id=? and host=?", id, host)
+			}).Error
 		}
 		return nil
 	}
@@ -192,15 +192,15 @@ func WaitingHostList(id int64, limit ...int) ([]TaskHost, error) {
 }
 
 func WaitingHostCount(id int64) (int64, error) {
-	return Count(DB().Table(tht(id)).Where("id=? and status='waiting'", id))
+	return DBRecordCount(tht(id), "id=? and status='waiting'", id)
 }
 
 func UnexpectedHostCount(id int64) (int64, error) {
-	return Count(DB().Table(tht(id)).Where("id=? and status in ('failed', 'timeout', 'killfailed')", id))
+	return DBRecordCount(tht(id), "id=? and status in ('failed', 'timeout', 'killfailed')", id)
 }
 
 func IngStatusHostCount(id int64) (int64, error) {
-	return Count(DB().Table(tht(id)).Where("id=? and status in ('waiting', 'running', 'killing')", id))
+	return DBRecordCount(tht(id), "id=? and status in ('waiting', 'running', 'killing')", id)
 }
 
 func RunWaitingHosts(hosts []TaskHost) error {

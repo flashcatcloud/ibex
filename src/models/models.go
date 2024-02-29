@@ -41,7 +41,7 @@ func DBRecordList[T any](table, where string, args ...interface{}) (T, error) {
 		return lst, err
 	}
 
-	return poster.PostByUrlsWithResp[T](config.C.CenterApi, "/ibex/v1/record/list", map[string]interface{}{
+	return poster.PostByUrlsWithResp[T](config.C.CenterApi, "/ibex/v1/db/record/list", map[string]interface{}{
 		"table": table,
 		"where": where,
 		"args":  args,
@@ -53,19 +53,11 @@ func DBRecordCount(table, where string, args ...interface{}) (int64, error) {
 		return Count(DB().Table(table).Where(where, args...))
 	}
 
-	return poster.PostByUrlsWithResp[int64](config.C.CenterApi, "/ibex/v1/record/count", map[string]interface{}{
+	return poster.PostByUrlsWithResp[int64](config.C.CenterApi, "/ibex/v1/db/record/count", map[string]interface{}{
 		"table": table,
 		"where": where,
 		"args":  args,
 	})
-}
-
-func DBRecordUpdate(values map[string]interface{}, table string, where string, args ...interface{}) error {
-	if config.C.IsCenter {
-		return DB().Table(table).Where(where, args...).Updates(values).Error
-	}
-
-	return poster.PostByUrls(config.C.CenterApi, "/ibex/v1/record/update", values)
 }
 
 func CacheKeyList(ctx context.Context, prefix string) ([]string, error) {
