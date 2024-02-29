@@ -110,7 +110,7 @@ func TaskHostGet(id int64, host string) (*TaskHost, error) {
 }
 
 func MarkDoneStatus(id, clock int64, host, status, stdout, stderr string, alertTriggered ...bool) error {
-	if len(alertTriggered) > 0 || alertTriggered[0] {
+	if len(alertTriggered) > 0 && alertTriggered[0] {
 		return CacheMarkDone(context.Background(), TaskHost{
 			Id:     id,
 			Host:   host,
