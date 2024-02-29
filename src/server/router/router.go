@@ -60,10 +60,6 @@ func configBaseRouter(r *gin.Engine, version string) {
 }
 
 func ConfigRouter(r *gin.Engine) {
-	if config.C.BasicAuth == nil {
-		config.C.BasicAuth = make(gin.Accounts)
-		config.C.BasicAuth["ibex"] = "ibex"
-	}
 	api := r.Group("/ibex/v1", gin.BasicAuth(config.C.BasicAuth))
 	{
 		api.POST("/tasks", taskAdd)

@@ -3,8 +3,10 @@ package ibex
 import "C"
 import (
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
 	"github.com/ulricqin/ibex/src/server/config"
+	"github.com/ulricqin/ibex/src/server/router"
 	"github.com/ulricqin/ibex/src/server/rpc"
 	"github.com/ulricqin/ibex/src/server/timer"
 	"github.com/ulricqin/ibex/src/storage"
@@ -13,9 +15,13 @@ import (
 	"strings"
 )
 
-func EdgeServerStart(cache redis.Cmdable, rpcListen string, api config.CenterApi) {
+func EdgeServerStart(cache redis.Cmdable, rpcListen string, api config.CenterApi, r *gin.Engine) {
 	config.C.IsCenter = false
 	config.C.CenterApi = api
+	config.C.BasicAuth = make(gin.Accounts)
+	config.C.BasicAuth[api.BasicAuthUser] = api.BasicAuthPass
+
+	router.ConfigRouter(r)
 
 	storage.Cache = cache
 
@@ -25,9 +31,13 @@ func EdgeServerStart(cache redis.Cmdable, rpcListen string, api config.CenterApi
 	timer.ReportResult()
 }
 
-func CenterServerStart(db *gorm.DB, cache redis.Cmdable, rpcListen string) {
+func CenterServerStart(db *gorm.DB, cache redis.Cmdable, rpcListen string, api config.CenterApi, r *gin.Engine) {
 	config.C.IsCenter = true
+	config.C.BasicAuth = make(gin.Accounts)
+	config.C.BasicAuth[api.BasicAuthUser] = api.BasicAuthPass
 	config.C.Heartbeat.LocalAddr = schedulerAddrGet(rpcListen)
+
+	router.ConfigRouter(r)
 
 	storage.DB = db
 	storage.Cache = cache
