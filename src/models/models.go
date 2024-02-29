@@ -34,11 +34,14 @@ func tht(id int64) string {
 	return fmt.Sprintf("task_host_%d", id%100)
 }
 
-func DBRecordList[T any](table, where string, args ...interface{}) (T, error) {
-	var lst T
+func DBRecordList[T any](table, where string, args ...interface{}) (lst T, err error) {
 	if config.C.IsCenter {
-		err := DB().Table(table).Where(where, args...).Find(&lst).Error
-		return lst, err
+		if where == "" || len(args) == 0 {
+			err = DB().Table(table).Find(&lst).Error
+		} else {
+			err = DB().Table(table).Where(where, args...).Find(&lst).Error
+		}
+		return
 	}
 
 	return poster.PostByUrlsWithResp[T](config.C.CenterApi, "/ibex/v1/db/record/list", map[string]interface{}{
@@ -50,6 +53,9 @@ func DBRecordList[T any](table, where string, args ...interface{}) (T, error) {
 
 func DBRecordCount(table, where string, args ...interface{}) (int64, error) {
 	if config.C.IsCenter {
+		if where == "" || len(args) == 0 {
+			return Count(DB().Table(table))
+		}
 		return Count(DB().Table(table).Where(where, args...))
 	}
 
