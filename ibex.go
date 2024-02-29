@@ -13,6 +13,9 @@ import (
 func EdgeServerStart(cache redis.Cmdable, rpcListen string, api config.CenterApi) {
 	config.C.IsCenter = false
 	config.C.CenterApi = api
+	config.C.BasicAuth = map[string]string{
+		"ibex": "ibex",
+	}
 
 	storage.Cache = cache
 
@@ -24,6 +27,9 @@ func EdgeServerStart(cache redis.Cmdable, rpcListen string, api config.CenterApi
 
 func CenterServerStart(db *gorm.DB, cache redis.Cmdable, rpcListen string) {
 	config.C.IsCenter = true
+	config.C.BasicAuth = map[string]string{
+		"ibex": "ibex",
+	}
 
 	storage.DB = db
 	migrate.Migrate()

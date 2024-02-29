@@ -60,7 +60,7 @@ func configBaseRouter(r *gin.Engine, version string) {
 }
 
 func ConfigRouter(r *gin.Engine) {
-	api := r.Group("/ibex/v1")
+	api := r.Group("/ibex/v1", gin.BasicAuth(config.C.BasicAuth))
 	{
 		api.POST("/tasks", taskAdd)
 		api.GET("/tasks", taskGets)
