@@ -77,7 +77,7 @@ func handleDoneTask(req types.ReportRequest) error {
 		t := req.ReportTasks[i]
 		err := models.MarkDoneStatus(t.Id, t.Clock, req.Ident, t.Status, t.Stdout, t.Stderr, t.AlertTriggered)
 		if err != nil {
-			logger.Errorf("cannot mark task done, id:%d, hostname:%s, clock:%d, status:%s", t.Id, req.Ident, t.Clock, t.Status)
+			logger.Errorf("cannot mark task done, id:%d, hostname:%s, clock:%d, status:%s, err: %v", t.Id, req.Ident, t.Clock, t.Status, err)
 			return err
 		}
 	}
