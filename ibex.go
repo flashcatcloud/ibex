@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
+	"github.com/toolkits/pkg/cache"
 	"github.com/ulricqin/ibex/src/server/config"
 	"github.com/ulricqin/ibex/src/server/router"
 	"github.com/ulricqin/ibex/src/server/rpc"
@@ -13,9 +14,10 @@ import (
 	"gorm.io/gorm"
 	"os"
 	"strings"
+	"time"
 )
 
-func EdgeServerStart(cache redis.Cmdable, rpcListen string, api config.CenterApi, r *gin.Engine) {
+func EdgeServerStart(rc redis.Cmdable, rpcListen string, api config.CenterApi, r *gin.Engine) {
 	config.C.IsCenter = false
 	config.C.CenterApi = api
 	config.C.BasicAuth = make(gin.Accounts)
@@ -23,15 +25,16 @@ func EdgeServerStart(cache redis.Cmdable, rpcListen string, api config.CenterApi
 
 	router.ConfigRouter(r)
 
-	storage.Cache = cache
+	storage.Cache = rc
 
 	rpc.Start(rpcListen)
 
+	cache.InitMemoryCache(time.Hour)
 	timer.CacheHostDoing()
 	timer.ReportResult()
 }
 
-func CenterServerStart(db *gorm.DB, cache redis.Cmdable, rpcListen string, auth gin.Accounts, r *gin.Engine) {
+func CenterServerStart(db *gorm.DB, rc redis.Cmdable, rpcListen string, auth gin.Accounts, r *gin.Engine) {
 	config.C.IsCenter = true
 	config.C.BasicAuth = auth
 	config.C.Heartbeat.LocalAddr = schedulerAddrGet(rpcListen)
@@ -39,10 +42,11 @@ func CenterServerStart(db *gorm.DB, cache redis.Cmdable, rpcListen string, auth 
 	router.ConfigRouter(r)
 
 	storage.DB = db
-	storage.Cache = cache
+	storage.Cache = rc
 
 	rpc.Start(rpcListen)
 
+	cache.InitMemoryCache(time.Hour)
 	timer.CacheHostDoing()
 	timer.ReportResult()
 	go timer.Heartbeat()

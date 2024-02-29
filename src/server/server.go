@@ -3,11 +3,13 @@ package server
 import (
 	"context"
 	"fmt"
+	"github.com/toolkits/pkg/cache"
 	"github.com/toolkits/pkg/i18n"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"syscall"
+	"time"
 
 	"github.com/ulricqin/ibex/src/pkg/httpx"
 	"github.com/ulricqin/ibex/src/pkg/logx"
@@ -99,6 +101,7 @@ func (s Server) initialize() (func(), error) {
 	}
 
 	// agentd pull task meta, which can be cached
+	cache.InitMemoryCache(time.Hour)
 
 	// init database
 	if err = storage.InitDB(config.C.DB); err != nil {
