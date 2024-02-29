@@ -2,7 +2,9 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"github.com/toolkits/pkg/logger"
 	"github.com/ulricqin/ibex/src/pkg/tlsx"
 	"os"
 	"strings"
@@ -102,4 +104,29 @@ func NewRedis(cfg RedisConfig) (Redis, error) {
 		os.Exit(1)
 	}
 	return redisClient, nil
+}
+
+func CacheMGet(ctx context.Context, keys []string) [][]byte {
+	var vals [][]byte
+	pipe := Cache.Pipeline()
+	for _, key := range keys {
+		pipe.Get(ctx, key)
+	}
+	cmds, _ := pipe.Exec(ctx)
+
+	for i, key := range keys {
+		cmd := cmds[i]
+		if errors.Is(cmd.Err(), redis.Nil) {
+			continue
+		}
+
+		if cmd.Err() != nil {
+			logger.Errorf("failed to get key: %s, err: %s", key, cmd.Err())
+			continue
+		}
+		val := []byte(cmd.(*redis.StringCmd).Val())
+		vals = append(vals, val)
+	}
+
+	return vals
 }

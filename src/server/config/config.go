@@ -2,18 +2,17 @@ package config
 
 import (
 	"fmt"
+	"github.com/ccfos/nightingale/v6/pkg/ormx"
 
 	"net"
 	"os"
 	"strings"
 	"sync"
 
-	"github.com/ulricqin/ibex/src/pkg/httpx"
-	"github.com/ulricqin/ibex/src/pkg/logx"
-	"github.com/ulricqin/ibex/src/pkg/ormx"
-
 	"github.com/gin-gonic/gin"
 	"github.com/koding/multiconfig"
+	"github.com/ulricqin/ibex/src/pkg/httpx"
+	"github.com/ulricqin/ibex/src/pkg/logx"
 )
 
 var (

@@ -2,6 +2,7 @@ package models
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/toolkits/pkg/logger"
 	"github.com/ulricqin/ibex/src/pkg/poster"
@@ -19,6 +20,14 @@ type TaskHost struct {
 	Status string `json:"status"`
 	Stdout string `json:"stdout"`
 	Stderr string `json:"stderr"`
+}
+
+func (t *TaskHost) MarshalBinary() ([]byte, error) {
+	return json.Marshal(t)
+}
+
+func (t *TaskHost) UnmarshalBinary(data []byte) error {
+	return json.Unmarshal(data, t)
 }
 
 func (t TaskHost) Upsert() error {
@@ -64,8 +73,13 @@ func ReportCacheResult(ctx context.Context) error {
 	}
 
 	taskHostList := make([]TaskHost, 0, len(keys))
-	if err := storage.Cache.MGet(ctx, keys...).Scan(&taskHostList); err != nil {
-		return err
+	values := storage.CacheMGet(ctx, keys)
+	for _, val := range values {
+		th := TaskHost{}
+		if err := json.Unmarshal(val, &th); err != nil {
+			return err
+		}
+		taskHostList = append(taskHostList, th)
 	}
 
 	dones := make([]TaskHost, 0)
@@ -85,7 +99,7 @@ func ReportCacheResult(ctx context.Context) error {
 	}
 
 	for key, err := range errs {
-		logger.Warning("report cache[%s] result error: %s", key, err.Error())
+		logger.Warningf("report cache[%s] result error: %s", key, err.Error())
 	}
 	return nil
 }

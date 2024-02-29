@@ -46,7 +46,7 @@ func (*Server) Report(req types.ReportRequest, resp *types.ReportResponse) error
 	lhosts := models.GetDoingLocalCache(req.Ident)
 	rhosts, err := models.GetDoingRedisCache(req.Ident)
 	if err != nil {
-		logger.Warning("cannot get host doing tasks from redis, ident:%s, error:%v", req.Ident, err)
+		logger.Warningf("cannot get host doing tasks from redis, ident:%s, error:%v", req.Ident, err)
 	}
 
 	tasks := make([]types.AssignTask, 0, len(lhosts)+len(rhosts))
