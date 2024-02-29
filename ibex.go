@@ -31,10 +31,9 @@ func EdgeServerStart(cache redis.Cmdable, rpcListen string, api config.CenterApi
 	timer.ReportResult()
 }
 
-func CenterServerStart(db *gorm.DB, cache redis.Cmdable, rpcListen string, api config.CenterApi, r *gin.Engine) {
+func CenterServerStart(db *gorm.DB, cache redis.Cmdable, rpcListen string, auth gin.Accounts, r *gin.Engine) {
 	config.C.IsCenter = true
-	config.C.BasicAuth = make(gin.Accounts)
-	config.C.BasicAuth[api.BasicAuthUser] = api.BasicAuthPass
+	config.C.BasicAuth = auth
 	config.C.Heartbeat.LocalAddr = schedulerAddrGet(rpcListen)
 
 	router.ConfigRouter(r)
