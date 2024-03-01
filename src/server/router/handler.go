@@ -337,7 +337,7 @@ func taskAdd(c *gin.Context) {
 
 	authUser := c.MustGet(gin.AuthUserKey).(string)
 	var err error
-	if f.AlertTriggered {
+	if f.AlertTriggered || !config.C.IsCenter {
 		// ToDO: 选择合适的方法，当网络不连通时，生成唯一的id，用于区分缓存中的task_meta和task_host_doing
 		// 防止边缘机房中不同任务的id相同；生成的id与数据库生成的id相同
 		// 一个思路是，利用时间戳生成id并借助redis防止同一个机房的不同n9e edge生成的id相同，生成id的数据不再存入数据库，只用于闭环执行
@@ -522,6 +522,9 @@ func tableRecordListGet(c *gin.Context) {
 	switch f.Table {
 	case models.TaskHostDoing{}.TableName():
 		lst, err := models.DBRecordList[[]models.TaskHostDoing](f.Table, f.Where, f.Args)
+		ginx.NewRender(c).Data(lst, err)
+	case models.TaskMeta{}.TableName():
+		lst, err := models.DBRecordList[[]models.TaskMeta](f.Table, f.Where, f.Args)
 		ginx.NewRender(c).Data(lst, err)
 	default:
 		ginx.Bomb(http.StatusBadRequest, "table[%v] not support", f.Table)
