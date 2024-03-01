@@ -1,17 +1,17 @@
 package models
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"sync"
 )
 
 type TaskHostDoing struct {
-	Id     int64 `gorm:"primaryKey"`
-	Host   string
-	Clock  int64
-	Action string
+	Id             int64 `gorm:"primaryKey"`
+	Host           string
+	Clock          int64
+	Action         string
+	AlertTriggered bool `gorm:"-"`
 }
 
 func (TaskHostDoing) TableName() string {
@@ -48,15 +48,15 @@ func GetDoingLocalCache(host string) []TaskHostDoing {
 	return doingMaps[host]
 }
 
-func GetDoingRedisCache(host string) ([]TaskHostDoing, error) {
-	ctx := context.Background()
+func IsAlertTriggered(host string, id int64) bool {
+	doingLock.RLock()
+	defer doingLock.RUnlock()
 
-	keys, err := CacheKeyList(ctx, fmt.Sprintf("host:doing:%s", host))
-	if err != nil {
-		return nil, err
+	for _, doing := range doingMaps[host] {
+		if doing.Id == id {
+			return doing.AlertTriggered
+		}
 	}
 
-	lst, err := CacheRecordList[TaskHostDoing](ctx, keys)
-
-	return lst, err
+	return false
 }

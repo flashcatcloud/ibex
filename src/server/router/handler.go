@@ -335,12 +335,19 @@ func taskAdd(c *gin.Context) {
 		Creator:   f.Creator,
 	}
 
+	err := meta.CleanFields()
+	ginx.Bomb(http.StatusBadRequest, err.Error())
+	meta.HandleFH(hosts[0])
+
 	authUser := c.MustGet(gin.AuthUserKey).(string)
-	var err error
-	if f.AlertTriggered || !config.C.IsCenter {
+	// 任务类型分为告警规则触发和n9e center用户下发两种；
+	// 告警规则触发的任务不需要schedule，直接执行；
+	// 此外n9e edge无前端界面，调用taskAdd接口肯定是告警规则触发的。
+	if f.AlertTriggered {
 		// ToDO: 选择合适的方法，当网络不连通时，生成唯一的id，用于区分缓存中的task_meta和task_host_doing
 		// 防止边缘机房中不同任务的id相同；生成的id与数据库生成的id相同
-		// 一个思路是，利用时间戳生成id并借助redis防止同一个机房的不同n9e edge生成的id相同，生成id的数据不再存入数据库，只用于闭环执行
+		// 一个思路是，redis自增id去防止同一个机房的不同n9e edge生成的id相同，
+		// 但没法防止不同边缘机房生成同样的id，所以，生成id的数据不再存入数据库，只用于闭环执行
 		if err := meta.Create(); err != nil {
 			meta.Id = time.Now().UnixNano()
 		}
@@ -568,5 +575,5 @@ func taskHostAdd(c *gin.Context) {
 func taskHostUpsert(c *gin.Context) {
 	var f []models.TaskHost
 	ginx.BindJSON(c, &f)
-	ginx.NewRender(c).Message(models.UpsertTaskHostList(f))
+	ginx.NewRender(c).Message(models.TaskHostUpserts(f))
 }

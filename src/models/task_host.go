@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/toolkits/pkg/logger"
 	"github.com/ulricqin/ibex/src/pkg/poster"
 	"github.com/ulricqin/ibex/src/server/config"
 	"github.com/ulricqin/ibex/src/storage"
 
+	"github.com/toolkits/pkg/logger"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -45,9 +45,13 @@ func (t *TaskHost) Create() error {
 	return poster.PostByUrls(config.C.CenterApi, "/ibex/v1/task/host", t)
 }
 
-func UpsertTaskHostList(lst []TaskHost) map[string]error {
+func TaskHostUpserts(lst []TaskHost) (map[string]error, error) {
 	if len(lst) == 0 {
-		return nil
+		return nil, fmt.Errorf("empty list")
+	}
+
+	if !config.C.IsCenter {
+		return poster.PostByUrlsWithResp[map[string]error](config.C.CenterApi, "/ibex/v1/task/hosts/upsert", lst)
 	}
 
 	errs := make(map[string]error, 0)
@@ -56,7 +60,7 @@ func UpsertTaskHostList(lst []TaskHost) map[string]error {
 			errs[fmt.Sprintf("%d:%s", th.Id, th.Host)] = err
 		}
 	}
-	return errs
+	return errs, nil
 }
 
 func taskHostCacheKey(id int64, host string) string {
@@ -83,13 +87,11 @@ func ReportCacheResult(ctx context.Context) error {
 	if len(dones) == 0 {
 		return nil
 	}
-	var errs map[string]error
-	if config.C.IsCenter {
-		errs = UpsertTaskHostList(dones)
-	} else {
-		errs, _ = poster.PostByUrlsWithResp[map[string]error](config.C.CenterApi, "/ibex/v1/task/hosts/upsert", dones)
-	}
 
+	errs, err := TaskHostUpserts(dones)
+	if err != nil {
+		return err
+	}
 	for key, err := range errs {
 		logger.Warningf("report cache[%s] result error: %s", key, err.Error())
 	}

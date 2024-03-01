@@ -1,8 +1,7 @@
 package timer
 
 import (
-	"fmt"
-	"os"
+	"context"
 	"time"
 
 	"github.com/ulricqin/ibex/src/models"
@@ -12,12 +11,7 @@ import (
 
 // CacheHostDoing 缓存task_host_doing表全部内容，减轻DB压力
 func CacheHostDoing() {
-	err := cacheHostDoing()
-	if err != nil {
-		fmt.Println("cannot cache host_doing", err)
-		os.Exit(1)
-	}
-
+	cacheHostDoing()
 	go loopCacheHostDoing()
 }
 
@@ -28,23 +22,31 @@ func loopCacheHostDoing() {
 	}
 }
 
-func cacheHostDoing() error {
-	var err error
-	var lst = make([]models.TaskHostDoing, 0)
-
-	lst, err = models.DBRecordList[[]models.TaskHostDoing](models.TaskHostDoing{}.TableName(), "")
+func cacheHostDoing() {
+	doingsFromDb, err := models.DBRecordList[[]models.TaskHostDoing](models.TaskHostDoing{}.TableName(), "")
 	if err != nil {
 		logger.Errorf("models.DBRecordList fail: %v", err)
-		return err
 	}
 
-	cnt := len(lst)
-	set := make(map[string][]models.TaskHostDoing, cnt)
+	ctx := context.Background()
+	keys, err := models.CacheKeyList(ctx, "host:doing:*")
+	if err != nil {
+		logger.Errorf("models.CacheKeyList fail: %v", err)
+	}
+	doingsFromRedis, err := models.CacheRecordList[models.TaskHostDoing](ctx, keys)
+	if err != nil {
+		logger.Errorf("models.CacheRecordList fail: %v", err)
+	}
 
-	for i := 0; i < cnt; i++ {
-		set[lst[i].Host] = append(set[lst[i].Host], lst[i])
+	set := make(map[string][]models.TaskHostDoing)
+	for _, doing := range doingsFromDb {
+		doing.AlertTriggered = false
+		set[doing.Host] = append(set[doing.Host], doing)
+	}
+	for _, doing := range doingsFromRedis {
+		doing.AlertTriggered = true
+		set[doing.Host] = append(set[doing.Host], doing)
 	}
 
 	models.SetDoingLocalCache(set)
-	return nil
 }

@@ -179,12 +179,6 @@ func (m *TaskMeta) Cache(host string) error {
 }
 
 func (m *TaskMeta) Save(hosts []string, action string) error {
-	if err := m.CleanFields(); err != nil {
-		return err
-	}
-
-	m.HandleFH(hosts[0])
-
 	return DB().Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(m).Error; err != nil {
 			return err
