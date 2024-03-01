@@ -123,7 +123,7 @@ func MarkDoneStatus(id, clock int64, host, status, stdout, stderr string, alertT
 	if !config.C.IsCenter {
 		return poster.PostByUrls(config.C.CenterApi, "/ibex/v1/mark/done", map[string]interface{}{
 			"id":     id,
-			"clock":  host,
+			"clock":  clock,
 			"host":   host,
 			"status": status,
 			"stdout": stdout,
