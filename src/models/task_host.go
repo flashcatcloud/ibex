@@ -178,7 +178,7 @@ func CacheMarkDone(ctx context.Context, host TaskHost) error {
 	rtx := storage.Cache.TxPipeline()
 
 	rtx.Del(ctx, hostDoingCacheKey(host.Id, host.Host))
-	rtx.Set(ctx, taskHostCacheKey(host.Id, host.Host), host, storage.DEFAULT)
+	rtx.Set(ctx, taskHostCacheKey(host.Id, host.Host), &host, storage.DEFAULT)
 
 	_, err := rtx.Exec(ctx)
 	return err
