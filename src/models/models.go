@@ -35,7 +35,7 @@ func tht(id int64) string {
 	return fmt.Sprintf("task_host_%d", id%100)
 }
 
-func DBRecordList[T any](table, where string, args ...interface{}) (lst T, err error) {
+func DBRecordGets[T any](table, where string, args ...interface{}) (lst T, err error) {
 	if config.C.IsCenter {
 		if where == "" || len(args) == 0 {
 			err = DB().Table(table).Find(&lst).Error
@@ -67,7 +67,7 @@ func DBRecordCount(table, where string, args ...interface{}) (int64, error) {
 	})
 }
 
-func CacheKeyList(ctx context.Context, prefix string) ([]string, error) {
+func CacheKeyGets(ctx context.Context, prefix string) ([]string, error) {
 	iter := storage.Cache.Scan(ctx, 0, prefix, 0).Iterator()
 	keys := make([]string, 0)
 	for iter.Next(ctx) {
@@ -77,7 +77,7 @@ func CacheKeyList(ctx context.Context, prefix string) ([]string, error) {
 	return keys, iter.Err()
 }
 
-func CacheRecordList[T any](ctx context.Context, keys []string) ([]T, error) {
+func CacheRecordGets[T any](ctx context.Context, keys []string) ([]T, error) {
 	lst := make([]T, 0, len(keys))
 	values := storage.CacheMGet(ctx, keys...)
 	for _, val := range values {

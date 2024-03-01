@@ -23,19 +23,19 @@ func loopCacheHostDoing() {
 }
 
 func cacheHostDoing() {
-	doingsFromDb, err := models.DBRecordList[[]models.TaskHostDoing](models.TaskHostDoing{}.TableName(), "")
+	doingsFromDb, err := models.DBRecordGets[[]models.TaskHostDoing](models.TaskHostDoing{}.TableName(), "")
 	if err != nil {
-		logger.Errorf("models.DBRecordList fail: %v", err)
+		logger.Errorf("models.DBRecordGets fail: %v", err)
 	}
 
 	ctx := context.Background()
-	keys, err := models.CacheKeyList(ctx, "host:doing:*")
+	keys, err := models.CacheKeyGets(ctx, "host:doing:*")
 	if err != nil {
-		logger.Errorf("models.CacheKeyList fail: %v", err)
+		logger.Errorf("models.CacheKeyGets fail: %v", err)
 	}
-	doingsFromRedis, err := models.CacheRecordList[models.TaskHostDoing](ctx, keys)
+	doingsFromRedis, err := models.CacheRecordGets[models.TaskHostDoing](ctx, keys)
 	if err != nil {
-		logger.Errorf("models.CacheRecordList fail: %v", err)
+		logger.Errorf("models.CacheRecordGets fail: %v", err)
 	}
 
 	set := make(map[string][]models.TaskHostDoing)

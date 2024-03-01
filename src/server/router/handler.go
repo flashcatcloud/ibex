@@ -336,7 +336,7 @@ func taskAdd(c *gin.Context) {
 	}
 
 	err := meta.CleanFields()
-	ginx.Bomb(http.StatusBadRequest, err.Error())
+	ginx.Dangerous(err)
 	meta.HandleFH(hosts[0])
 
 	authUser := c.MustGet(gin.AuthUserKey).(string)
@@ -528,10 +528,10 @@ func tableRecordListGet(c *gin.Context) {
 	ginx.BindJSON(c, &f)
 	switch f.Table {
 	case models.TaskHostDoing{}.TableName():
-		lst, err := models.DBRecordList[[]models.TaskHostDoing](f.Table, f.Where, f.Args)
+		lst, err := models.DBRecordGets[[]models.TaskHostDoing](f.Table, f.Where, f.Args)
 		ginx.NewRender(c).Data(lst, err)
 	case models.TaskMeta{}.TableName():
-		lst, err := models.DBRecordList[[]models.TaskMeta](f.Table, f.Where, f.Args)
+		lst, err := models.DBRecordGets[[]models.TaskMeta](f.Table, f.Where, f.Args)
 		ginx.NewRender(c).Data(lst, err)
 	default:
 		ginx.Bomb(http.StatusBadRequest, "table[%v] not support", f.Table)

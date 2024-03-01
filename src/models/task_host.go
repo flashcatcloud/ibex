@@ -68,12 +68,12 @@ func taskHostCacheKey(id int64, host string) string {
 }
 
 func ReportCacheResult(ctx context.Context) error {
-	keys, err := CacheKeyList(ctx, "task:host:*")
+	keys, err := CacheKeyGets(ctx, "task:host:*")
 	if err != nil {
 		return err
 	}
 
-	lst, err := CacheRecordList[TaskHost](ctx, keys)
+	lst, err := CacheRecordGets[TaskHost](ctx, keys)
 	if err != nil {
 		return err
 	}
