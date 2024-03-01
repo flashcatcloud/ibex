@@ -2,12 +2,14 @@ package main
 
 import (
 	"fmt"
-	"github.com/toolkits/pkg/net/tcpx"
-	"github.com/toolkits/pkg/runner"
+	"os"
+
 	"github.com/ulricqin/ibex/src/agentd"
 	"github.com/ulricqin/ibex/src/server"
+
+	"github.com/toolkits/pkg/net/tcpx"
+	"github.com/toolkits/pkg/runner"
 	"github.com/urfave/cli/v2"
-	"os"
 )
 
 // VERSION go build -ldflags "-X main.VERSION=x.x.x"

@@ -3,9 +3,10 @@ package rpc
 import (
 	"fmt"
 
-	"github.com/toolkits/pkg/logger"
 	"github.com/ulricqin/ibex/src/models"
 	"github.com/ulricqin/ibex/src/types"
+
+	"github.com/toolkits/pkg/logger"
 )
 
 // Ping return string 'pong', just for test

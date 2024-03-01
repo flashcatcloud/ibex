@@ -4,13 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/toolkits/pkg/logger"
-	"github.com/ulricqin/ibex/src/pkg/tlsx"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/ulricqin/ibex/src/pkg/tlsx"
+
 	"github.com/redis/go-redis/v9"
+	"github.com/toolkits/pkg/logger"
 )
 
 type RedisConfig struct {

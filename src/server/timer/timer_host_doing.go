@@ -2,11 +2,12 @@ package timer
 
 import (
 	"fmt"
-	"github.com/toolkits/pkg/logger"
 	"os"
 	"time"
 
 	"github.com/ulricqin/ibex/src/models"
+
+	"github.com/toolkits/pkg/logger"
 )
 
 // CacheHostDoing 缓存task_host_doing表全部内容，减轻DB压力

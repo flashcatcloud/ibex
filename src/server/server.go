@@ -3,8 +3,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"github.com/toolkits/pkg/cache"
-	"github.com/toolkits/pkg/i18n"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -18,6 +16,9 @@ import (
 	"github.com/ulricqin/ibex/src/server/rpc"
 	"github.com/ulricqin/ibex/src/server/timer"
 	"github.com/ulricqin/ibex/src/storage"
+
+	"github.com/toolkits/pkg/cache"
+	"github.com/toolkits/pkg/i18n"
 )
 
 type Server struct {

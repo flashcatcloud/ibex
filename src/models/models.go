@@ -4,11 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	"github.com/ulricqin/ibex/src/pkg/poster"
 	"github.com/ulricqin/ibex/src/server/config"
-	"gorm.io/gorm"
-
 	"github.com/ulricqin/ibex/src/storage"
+
+	"gorm.io/gorm"
 )
 
 func DB() *gorm.DB {

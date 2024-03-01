@@ -3,9 +3,11 @@ package timer
 import (
 	"context"
 	"fmt"
-	"github.com/toolkits/pkg/logger"
-	"github.com/ulricqin/ibex/src/models"
 	"time"
+
+	"github.com/ulricqin/ibex/src/models"
+
+	"github.com/toolkits/pkg/logger"
 )
 
 func ReportResult() {
