@@ -575,5 +575,5 @@ func taskHostAdd(c *gin.Context) {
 func taskHostUpsert(c *gin.Context) {
 	var f []models.TaskHost
 	ginx.BindJSON(c, &f)
-	ginx.NewRender(c).Message(models.TaskHostUpserts(f))
+	ginx.NewRender(c).Data(models.TaskHostUpserts(f))
 }
