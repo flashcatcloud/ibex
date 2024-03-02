@@ -3,6 +3,7 @@ package ibex
 import "C"
 import (
 	"fmt"
+	"github.com/ulricqin/ibex/src/models"
 	"gorm.io/gorm"
 	"os"
 	"strings"
@@ -28,10 +29,16 @@ func EdgeServerStart(rc redis.Cmdable, rpcListen string, api config.CenterApi, r
 	router.ConfigRouter(r)
 
 	storage.Cache = rc
+	if err := storage.IdInit(); err != nil {
+		fmt.Println("cannot init id generator: ", err)
+		os.Exit(1)
+	}
 
 	rpc.Start(rpcListen)
 
 	cache.InitMemoryCache(time.Hour)
+	models.InitTaskHostCache()
+
 	timer.CacheHostDoing()
 	timer.ReportResult()
 }
@@ -45,10 +52,17 @@ func CenterServerStart(db *gorm.DB, rc redis.Cmdable, rpcListen string, auth gin
 
 	storage.DB = db
 	storage.Cache = rc
+	if err := storage.IdInit(); err != nil {
+		fmt.Println("cannot init id generator: ", err)
+		os.Exit(1)
+	}
+	models.InitTaskHostCache()
 
 	rpc.Start(rpcListen)
 
 	cache.InitMemoryCache(time.Hour)
+	models.InitTaskHostCache()
+
 	timer.CacheHostDoing()
 	timer.ReportResult()
 	go timer.Heartbeat()

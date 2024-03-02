@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"github.com/ccfos/nightingale/v6/pkg/ormx"
+	"github.com/ulricqin/ibex/src/storage"
 
 	"net"
 	"os"
@@ -96,6 +97,7 @@ type Config struct {
 	HTTP      httpx.Config
 	BasicAuth gin.Accounts
 	DB        ormx.DBConfig
+	Cache     storage.RedisConfig
 }
 
 type RPC struct {

@@ -30,7 +30,17 @@ type RedisConfig struct {
 type Redis redis.Cmdable
 
 var Cache Redis
+
 var DEFAULT = time.Hour
+
+func InitRedis(cfg RedisConfig) (err error) {
+	Cache, err = NewRedis(cfg)
+	if err != nil {
+		return err
+	}
+
+	return IdInit()
+}
 
 func NewRedis(cfg RedisConfig) (Redis, error) {
 	var redisClient Redis
@@ -134,4 +144,14 @@ func CacheMGet(ctx context.Context, keys ...string) [][]byte {
 	}
 
 	return vals
+}
+
+const IDINITIAL = 1 << 32
+
+func IdInit() error {
+	return Cache.Set(context.Background(), "id", IDINITIAL, 0).Err()
+}
+
+func IdGet() (int64, error) {
+	return Cache.Incr(context.Background(), "id").Result()
 }

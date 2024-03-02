@@ -168,11 +168,7 @@ func (m *TaskMeta) Cache(host string) error {
 		Clock:  time.Now().Unix(),
 		Action: "start",
 	}, storage.DEFAULT)
-	tx.Set(ctx, taskHostCacheKey(m.Id, host), &TaskHost{
-		Id:     m.Id,
-		Host:   host,
-		Status: "running",
-	}, storage.DEFAULT)
+
 	_, err := tx.Exec(ctx)
 
 	return err

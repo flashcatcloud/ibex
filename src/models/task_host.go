@@ -10,7 +10,6 @@ import (
 	"github.com/ulricqin/ibex/src/server/config"
 	"github.com/ulricqin/ibex/src/storage"
 
-	"github.com/toolkits/pkg/logger"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -61,41 +60,6 @@ func TaskHostUpserts(lst []TaskHost) (map[string]error, error) {
 		}
 	}
 	return errs, nil
-}
-
-func taskHostCacheKey(id int64, host string) string {
-	return fmt.Sprintf("task:host:%d:%s", id, host)
-}
-
-func ReportCacheResult(ctx context.Context) error {
-	keys, err := CacheKeyGets(ctx, "task:host:*")
-	if err != nil {
-		return err
-	}
-
-	lst, err := CacheRecordGets[TaskHost](ctx, keys)
-	if err != nil {
-		return err
-	}
-
-	dones := make([]TaskHost, 0)
-	for _, task := range lst {
-		if task.Status != "running" {
-			dones = append(dones, task)
-		}
-	}
-	if len(dones) == 0 {
-		return nil
-	}
-
-	errs, err := TaskHostUpserts(dones)
-	if err != nil {
-		return err
-	}
-	for key, err := range errs {
-		logger.Warningf("report cache[%s] result error: %s", key, err.Error())
-	}
-	return nil
 }
 
 func TaskHostGet(id int64, host string) (*TaskHost, error) {
@@ -175,13 +139,12 @@ func MarkDoneStatus(id, clock int64, host, status, stdout, stderr string, alertT
 }
 
 func CacheMarkDone(ctx context.Context, host TaskHost) error {
-	rtx := storage.Cache.TxPipeline()
+	if err := storage.Cache.Del(ctx, hostDoingCacheKey(host.Id, host.Host)).Err(); err != nil {
+		return err
+	}
+	taskHostCache.Set(host)
 
-	rtx.Del(ctx, hostDoingCacheKey(host.Id, host.Host))
-	rtx.Set(ctx, taskHostCacheKey(host.Id, host.Host), &host, storage.DEFAULT)
-
-	_, err := rtx.Exec(ctx)
-	return err
+	return nil
 }
 
 func WaitingHostList(id int64, limit ...int) ([]TaskHost, error) {
