@@ -157,16 +157,17 @@ func (m *TaskMeta) HandleFH(fh string) {
 	m.Title = m.Title + " FH: " + fh
 }
 
-func (m *TaskMeta) Cache(host string) error {
+func (m *TaskMeta) Cache(host string, alertTriggered bool) error {
 	ctx := context.Background()
 
 	tx := storage.Cache.TxPipeline()
 	tx.Set(ctx, taskMetaCacheKey(m.Id), m, storage.DEFAULT)
 	tx.Set(ctx, hostDoingCacheKey(m.Id, host), &TaskHostDoing{
-		Id:     m.Id,
-		Host:   host,
-		Clock:  time.Now().Unix(),
-		Action: "start",
+		Id:             m.Id,
+		Host:           host,
+		Clock:          time.Now().Unix(),
+		Action:         "start",
+		AlertTriggered: alertTriggered,
 	}, storage.DEFAULT)
 	tx.Set(ctx, taskHostCacheKey(m.Id, host), &TaskHost{
 		Id:     m.Id,

@@ -362,7 +362,7 @@ func taskAdd(c *gin.Context) {
 			}
 		}
 
-		err = meta.Cache(hosts[0])
+		err = meta.Cache(hosts[0], f.AlertTriggered)
 		ginx.Dangerous(err)
 
 	} else {
