@@ -340,7 +340,7 @@ func taskAdd(c *gin.Context) {
 	meta.HandleFH(hosts[0])
 
 	authUser := c.MustGet(gin.AuthUserKey).(string)
-	// 任务类型分为告警规则触发和n9e center用户下发两种；
+	// 任务类型分为"告警规则触发"和"n9e center用户下发"两种；
 	// 告警规则触发的任务不需要schedule，直接执行；
 	// 此外n9e edge无前端界面，调用taskAdd接口肯定是告警规则触发的。
 	if f.AlertTriggered {
@@ -362,7 +362,7 @@ func taskAdd(c *gin.Context) {
 			}
 		}
 
-		err = meta.Cache(hosts[0], f.AlertTriggered)
+		err = meta.Cache(hosts[0])
 		ginx.Dangerous(err)
 
 	} else {

@@ -48,15 +48,18 @@ func GetDoingLocalCache(host string) []TaskHostDoing {
 	return doingMaps[host]
 }
 
-func IsAlertTriggered(host string, id int64) bool {
+func IsAlertTriggered(host string, id int64) (exist, isAlertTriggered bool) {
 	doingLock.RLock()
 	defer doingLock.RUnlock()
 
-	for _, doing := range doingMaps[host] {
+	hostDoing := doingMaps[host]
+	for _, doing := range hostDoing {
 		if doing.Id == id {
-			return doing.AlertTriggered
+			exist = true
+			isAlertTriggered = doing.AlertTriggered
+			return
 		}
 	}
 
-	return false
+	return false, false
 }
