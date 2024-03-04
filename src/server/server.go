@@ -3,12 +3,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"os"
-	"os/signal"
-	"path/filepath"
-	"syscall"
-	"time"
-
 	"github.com/ulricqin/ibex/src/pkg/httpx"
 	"github.com/ulricqin/ibex/src/pkg/logx"
 	"github.com/ulricqin/ibex/src/server/config"
@@ -16,8 +10,11 @@ import (
 	"github.com/ulricqin/ibex/src/server/rpc"
 	"github.com/ulricqin/ibex/src/server/timer"
 	"github.com/ulricqin/ibex/src/storage"
+	"os"
+	"os/signal"
+	"path/filepath"
+	"syscall"
 
-	"github.com/toolkits/pkg/cache"
 	"github.com/toolkits/pkg/i18n"
 )
 
@@ -100,9 +97,6 @@ func (s Server) initialize() (func(), error) {
 	} else {
 		fns.Add(loggerClean)
 	}
-
-	// agentd pull task meta, which can be cached
-	cache.InitMemoryCache(time.Hour)
 
 	// init database
 	if config.C.IsCenter {

@@ -2,21 +2,18 @@ package ibex
 
 import (
 	"fmt"
-	"gorm.io/gorm"
-	"os"
-	"strings"
-	"time"
-
 	"github.com/ulricqin/ibex/src/server/config"
 	"github.com/ulricqin/ibex/src/server/router"
 	"github.com/ulricqin/ibex/src/server/rpc"
 	"github.com/ulricqin/ibex/src/server/timer"
 	"github.com/ulricqin/ibex/src/storage"
+	"gorm.io/gorm"
+	"os"
+	"strings"
 
 	n9eConf "github.com/ccfos/nightingale/v6/conf"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
-	"github.com/toolkits/pkg/cache"
 )
 
 var N9eIbex *n9eConf.Ibex
@@ -39,8 +36,6 @@ func EdgeServerStart(rc redis.Cmdable, n9eIbex n9eConf.Ibex, api config.CenterAp
 	}
 
 	rpc.Start(n9eIbex.RPCListen)
-
-	cache.InitMemoryCache(time.Hour)
 
 	timer.CacheHostDoing()
 	timer.ReportResult()
@@ -65,8 +60,6 @@ func CenterServerStart(db *gorm.DB, rc redis.Cmdable, n9eIbex n9eConf.Ibex, r *g
 	}
 
 	rpc.Start(n9eIbex.RPCListen)
-
-	cache.InitMemoryCache(time.Hour)
 
 	timer.CacheHostDoing()
 	timer.ReportResult()

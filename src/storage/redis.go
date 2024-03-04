@@ -31,7 +31,7 @@ type Redis redis.Cmdable
 
 var Cache Redis
 
-var DEFAULT = time.Hour
+const DEFAULT = time.Hour
 
 func InitRedis(cfg RedisConfig) (err error) {
 	Cache, err = NewRedis(cfg)
