@@ -63,5 +63,3 @@ func IsAlertTriggered(host string, id int64) (exist, isAlertTriggered bool) {
 
 	return false, false
 }
-
-func DelDoingFromLocalCache() {}

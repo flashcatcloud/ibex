@@ -4,12 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/ulricqin/ibex/src/pkg/poster"
 	"github.com/ulricqin/ibex/src/server/config"
 	"github.com/ulricqin/ibex/src/storage"
 
+	"github.com/toolkits/pkg/logger"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -142,7 +144,7 @@ func CacheMarkDone(ctx context.Context, host TaskHost) error {
 	if err := storage.Cache.Del(ctx, hostDoingCacheKey(host.Id, host.Host)).Err(); err != nil {
 		return err
 	}
-	taskHostCache.Set(host)
+	TaskHostCachePush(host)
 
 	return nil
 }
@@ -202,4 +204,53 @@ func TaskHostGets(id int64) ([]TaskHost, error) {
 	var ret []TaskHost
 	err := DB().Table(tht(id)).Where("id=?", id).Order("ii").Find(&ret).Error
 	return ret, err
+}
+
+var (
+	taskHostCache = make([]TaskHost, 128)
+	taskHostLock  sync.RWMutex
+)
+
+func TaskHostCachePush(th TaskHost) {
+	taskHostLock.Lock()
+	defer taskHostLock.Unlock()
+
+	taskHostCache = append(taskHostCache, th)
+}
+
+func TaskHostCachePopAll() []TaskHost {
+	taskHostLock.Lock()
+	defer taskHostLock.Unlock()
+
+	all := taskHostCache
+	taskHostCache = make([]TaskHost, 0, 128)
+
+	return all
+}
+
+func ReportCacheResult() error {
+	result := TaskHostCachePopAll()
+	dones := make([]TaskHost, 0)
+	for _, th := range result {
+		// id大于redis初始id，说明是edge与center失联时，本地告警规则触发的自愈脚本生成的id
+		// 为了防止不同边缘机房生成的脚本任务id相同，不上报结果至数据库
+		if th.Id >= storage.IDINITIAL {
+			logger.Infof("task[%s] host[%s] done, result:[%v]", th.Id, th.Host, th)
+		} else {
+			dones = append(dones, th)
+		}
+	}
+
+	if len(dones) == 0 {
+		return nil
+	}
+
+	errs, err := TaskHostUpserts(dones)
+	if err != nil {
+		return err
+	}
+	for key, err := range errs {
+		logger.Warningf("report task_host_cache[%s] result error: %v", key, err)
+	}
+	return nil
 }
