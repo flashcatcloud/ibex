@@ -35,13 +35,13 @@ var (
 	doingMaps map[string][]TaskHostDoing
 )
 
-func SetDoingLocalCache(v map[string][]TaskHostDoing) {
+func SetDoingCache(v map[string][]TaskHostDoing) {
 	doingLock.Lock()
 	doingMaps = v
 	doingLock.Unlock()
 }
 
-func GetDoingLocalCache(host string) []TaskHostDoing {
+func GetDoingCache(host string) []TaskHostDoing {
 	doingLock.RLock()
 	defer doingLock.RUnlock()
 

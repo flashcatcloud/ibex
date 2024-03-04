@@ -2,10 +2,14 @@ package router
 
 import (
 	"fmt"
-	"github.com/ulricqin/ibex/src/storage"
+
 	"io/ioutil"
 	"net/http"
 	"time"
+
+	"github.com/ulricqin/ibex/src/models"
+	"github.com/ulricqin/ibex/src/server/config"
+	"github.com/ulricqin/ibex/src/storage"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/errorx"
@@ -13,8 +17,6 @@ import (
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/slice"
 	"github.com/toolkits/pkg/str"
-	"github.com/ulricqin/ibex/src/models"
-	"github.com/ulricqin/ibex/src/server/config"
 )
 
 func taskStdout(c *gin.Context) {
@@ -348,7 +350,7 @@ func taskAdd(c *gin.Context) {
 		if err := meta.Create(); err != nil {
 			// 当网络不连通时，生成唯一的id，防止边缘机房中不同任务的id相同；
 			// 方法是，redis自增id去防止同一个机房的不同n9e edge生成的id相同；
-			// 但没法防止不同边缘机房生成同样的id，所以，生成id的数据不再会上报存入数据库，只用于闭环执行。
+			// 但没法防止不同边缘机房生成同样的id，所以，生成id的数据不会上报存入数据库，只用于闭环执行。
 			meta.Id, err = storage.IdGet()
 			ginx.Dangerous(err)
 		}
@@ -359,7 +361,7 @@ func taskAdd(c *gin.Context) {
 				Status: "running",
 			}
 			if err = t.Create(); err != nil {
-				logger.Warningf("task_host_create_fail: authUser=%s title=%s err=%s", authUser, meta.Title, err.Error())
+				logger.Warningf("task_add_fail: authUser=%s title=%s err=%s", authUser, meta.Title, err.Error())
 			}
 		}
 

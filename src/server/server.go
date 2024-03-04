@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"github.com/ulricqin/ibex/src/models"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -104,7 +103,6 @@ func (s Server) initialize() (func(), error) {
 
 	// agentd pull task meta, which can be cached
 	cache.InitMemoryCache(time.Hour)
-	models.InitTaskHostCache()
 
 	// init database
 	if config.C.IsCenter {

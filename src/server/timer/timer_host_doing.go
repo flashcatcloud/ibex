@@ -48,5 +48,5 @@ func cacheHostDoing() {
 		set[doing.Host] = append(set[doing.Host], doing)
 	}
 
-	models.SetDoingLocalCache(set)
+	models.SetDoingCache(set)
 }

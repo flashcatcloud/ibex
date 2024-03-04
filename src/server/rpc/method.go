@@ -44,7 +44,7 @@ func (*Server) Report(req types.ReportRequest, resp *types.ReportResponse) error
 		}
 	}
 
-	hosts := models.GetDoingLocalCache(req.Ident)
+	hosts := models.GetDoingCache(req.Ident)
 
 	tasks := make([]types.AssignTask, 0, len(hosts))
 	for _, h := range hosts {

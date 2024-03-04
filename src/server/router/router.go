@@ -2,14 +2,15 @@ package router
 
 import (
 	"fmt"
-	"github.com/gin-contrib/pprof"
+
 	"os"
 	"strings"
 
-	"github.com/gin-gonic/gin"
-
 	"github.com/ulricqin/ibex/src/pkg/aop"
 	"github.com/ulricqin/ibex/src/server/config"
+
+	"github.com/gin-contrib/pprof"
+	"github.com/gin-gonic/gin"
 )
 
 func New(version string) *gin.Engine {

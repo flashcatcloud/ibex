@@ -2,7 +2,6 @@ package models
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
@@ -22,14 +21,6 @@ type TaskHost struct {
 	Status string `json:"status"`
 	Stdout string `json:"stdout"`
 	Stderr string `json:"stderr"`
-}
-
-func (t *TaskHost) MarshalBinary() ([]byte, error) {
-	return json.Marshal(t)
-}
-
-func (t *TaskHost) UnmarshalBinary(data []byte) error {
-	return json.Unmarshal(data, t)
 }
 
 func (t *TaskHost) Upsert() error {
@@ -230,22 +221,22 @@ func TaskHostCachePopAll() []TaskHost {
 
 func ReportCacheResult() error {
 	result := TaskHostCachePopAll()
-	dones := make([]TaskHost, 0)
+	reports := make([]TaskHost, 0)
 	for _, th := range result {
 		// id大于redis初始id，说明是edge与center失联时，本地告警规则触发的自愈脚本生成的id
 		// 为了防止不同边缘机房生成的脚本任务id相同，不上报结果至数据库
 		if th.Id >= storage.IDINITIAL {
 			logger.Infof("task[%s] host[%s] done, result:[%v]", th.Id, th.Host, th)
 		} else {
-			dones = append(dones, th)
+			reports = append(reports, th)
 		}
 	}
 
-	if len(dones) == 0 {
+	if len(reports) == 0 {
 		return nil
 	}
 
-	errs, err := TaskHostUpserts(dones)
+	errs, err := TaskHostUpserts(reports)
 	if err != nil {
 		return err
 	}

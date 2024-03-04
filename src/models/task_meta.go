@@ -73,9 +73,9 @@ func TaskMetaGet(where string, args ...interface{}) (*TaskMeta, error) {
 	return lst[0], nil
 }
 
-// TaskMetaGet 根据ID获取任务元信息，会用到内存缓存
+// TaskMetaGet 根据ID获取任务元信息，会用到缓存
 func TaskMetaGetByID(id int64) (*TaskMeta, error) {
-	meta, err := CacheTaskMetaGet(id)
+	meta, err := TaskMetaCacheGet(id)
 	if err == nil {
 		return meta, nil
 	}
@@ -94,7 +94,7 @@ func TaskMetaGetByID(id int64) (*TaskMeta, error) {
 	return meta, err
 }
 
-func CacheTaskMetaGet(id int64) (*TaskMeta, error) {
+func TaskMetaCacheGet(id int64) (*TaskMeta, error) {
 	res := storage.Cache.Get(context.Background(), taskMetaCacheKey(id))
 	meta := new(TaskMeta)
 	err := res.Scan(meta)
