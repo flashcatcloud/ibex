@@ -1,6 +1,5 @@
 package ibex
 
-import "C"
 import (
 	"fmt"
 	"github.com/ulricqin/ibex/src/models"
@@ -15,16 +14,22 @@ import (
 	"github.com/ulricqin/ibex/src/server/timer"
 	"github.com/ulricqin/ibex/src/storage"
 
+	n9eConf "github.com/ccfos/nightingale/v6/conf"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
 	"github.com/toolkits/pkg/cache"
 )
 
-func EdgeServerStart(rc redis.Cmdable, rpcListen string, api config.CenterApi, r *gin.Engine) {
+var N9eIbex *n9eConf.Ibex
+
+func EdgeServerStart(rc redis.Cmdable, n9eIbex n9eConf.Ibex, api config.CenterApi, r *gin.Engine, httpPort int) {
+	N9eIbex = &n9eIbex
+
 	config.C.IsCenter = false
 	config.C.CenterApi = api
 	config.C.BasicAuth = make(gin.Accounts)
-	config.C.BasicAuth[api.BasicAuthUser] = api.BasicAuthPass
+	config.C.BasicAuth[n9eIbex.BasicAuthUser] = n9eIbex.BasicAuthPass
+	config.C.HTTP.Port = httpPort
 
 	router.ConfigRouter(r)
 
@@ -34,7 +39,7 @@ func EdgeServerStart(rc redis.Cmdable, rpcListen string, api config.CenterApi, r
 		os.Exit(1)
 	}
 
-	rpc.Start(rpcListen)
+	rpc.Start(n9eIbex.RPCListen)
 
 	cache.InitMemoryCache(time.Hour)
 	models.InitTaskHostCache()
@@ -43,10 +48,14 @@ func EdgeServerStart(rc redis.Cmdable, rpcListen string, api config.CenterApi, r
 	timer.ReportResult()
 }
 
-func CenterServerStart(db *gorm.DB, rc redis.Cmdable, rpcListen string, auth gin.Accounts, r *gin.Engine) {
+func CenterServerStart(db *gorm.DB, rc redis.Cmdable, n9eIbex n9eConf.Ibex, r *gin.Engine, httpPort int) {
+	N9eIbex = &n9eIbex
+
 	config.C.IsCenter = true
-	config.C.BasicAuth = auth
-	config.C.Heartbeat.LocalAddr = schedulerAddrGet(rpcListen)
+	config.C.BasicAuth = make(gin.Accounts)
+	config.C.BasicAuth[n9eIbex.BasicAuthUser] = n9eIbex.BasicAuthPass
+	config.C.Heartbeat.LocalAddr = schedulerAddrGet(n9eIbex.RPCListen)
+	config.C.HTTP.Port = httpPort
 
 	router.ConfigRouter(r)
 
@@ -58,7 +67,7 @@ func CenterServerStart(db *gorm.DB, rc redis.Cmdable, rpcListen string, auth gin
 	}
 	models.InitTaskHostCache()
 
-	rpc.Start(rpcListen)
+	rpc.Start(n9eIbex.RPCListen)
 
 	cache.InitMemoryCache(time.Hour)
 	models.InitTaskHostCache()

@@ -41,7 +41,7 @@ func ReportCacheResult() error {
 	result := taskHostCache.PopAll()
 	dones := make([]TaskHost, 0)
 	for _, th := range result {
-		// id大于redis初始id，说明是edge与center失联时，本地告警规则触发的自愈脚本，生成的id
+		// id大于redis初始id，说明是edge与center失联时，本地告警规则触发的自愈脚本生成的id
 		// 为了防止不同边缘机房生成的脚本任务id相同，不上报结果至数据库
 		if th.Id >= storage.IDINITIAL {
 			logger.Infof("task[%s] host[%s] done, result:[%v]", th.Id, th.Host, th)
@@ -63,34 +63,3 @@ func ReportCacheResult() error {
 	}
 	return nil
 }
-
-//func ReportCacheResult(ctx context.Context) error {
-//	keys, err := CacheKeyGets(ctx, "task:host:*")
-//	if err != nil {
-//		return err
-//	}
-//
-//	lst, err := CacheRecordGets[TaskHost](ctx, keys)
-//	if err != nil {
-//		return err
-//	}
-//
-//	dones := make([]TaskHost, 0)
-//	for _, task := range lst {
-//		if task.Status != "running" {
-//			dones = append(dones, task)
-//		}
-//	}
-//	if len(dones) == 0 {
-//		return nil
-//	}
-//
-//	errs, err := TaskHostUpserts(dones)
-//	if err != nil {
-//		return err
-//	}
-//	for key, err := range errs {
-//		logger.Warningf("report cache[%s] result error: %s", key, err.Error())
-//	}
-//	return nil
-//}
