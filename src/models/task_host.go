@@ -198,7 +198,7 @@ func TaskHostGets(id int64) ([]TaskHost, error) {
 }
 
 var (
-	taskHostCache = make([]TaskHost, 128)
+	taskHostCache = make([]TaskHost, 0, 128)
 	taskHostLock  sync.RWMutex
 )
 
