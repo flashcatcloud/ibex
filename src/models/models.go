@@ -35,7 +35,7 @@ func tht(id int64) string {
 	return fmt.Sprintf("task_host_%d", id%100)
 }
 
-func DBRecordGets[T any](table, where string, args ...interface{}) (lst T, err error) {
+func TableRecordGets[T any](table, where string, args ...interface{}) (lst T, err error) {
 	if config.C.IsCenter {
 		if where == "" || len(args) == 0 {
 			err = DB().Table(table).Find(&lst).Error
@@ -45,14 +45,14 @@ func DBRecordGets[T any](table, where string, args ...interface{}) (lst T, err e
 		return
 	}
 
-	return poster.PostByUrlsWithResp[T](config.C.CenterApi, "/ibex/v1/db/record/list", map[string]interface{}{
+	return poster.PostByUrlsWithResp[T](config.C.CenterApi, "/ibex/v1/table/record/list", map[string]interface{}{
 		"table": table,
 		"where": where,
 		"args":  args,
 	})
 }
 
-func DBRecordCount(table, where string, args ...interface{}) (int64, error) {
+func TableRecordCount(table, where string, args ...interface{}) (int64, error) {
 	if config.C.IsCenter {
 		if where == "" || len(args) == 0 {
 			return Count(DB().Table(table))
@@ -60,7 +60,7 @@ func DBRecordCount(table, where string, args ...interface{}) (int64, error) {
 		return Count(DB().Table(table).Where(where, args...))
 	}
 
-	return poster.PostByUrlsWithResp[int64](config.C.CenterApi, "/ibex/v1/db/record/count", map[string]interface{}{
+	return poster.PostByUrlsWithResp[int64](config.C.CenterApi, "/ibex/v1/table/record/count", map[string]interface{}{
 		"table": table,
 		"where": where,
 		"args":  args,
@@ -79,7 +79,7 @@ func CacheKeyGets(ctx context.Context, prefix string) ([]string, error) {
 
 func CacheRecordGets[T any](ctx context.Context, keys []string) ([]T, error) {
 	lst := make([]T, 0, len(keys))
-	values := storage.CacheMGet(ctx, keys...)
+	values := storage.CacheMGet(ctx, keys)
 	for _, val := range values {
 		t := new(T)
 		if err := json.Unmarshal(val, t); err != nil {

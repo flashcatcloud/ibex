@@ -91,14 +91,14 @@ func MarkDoneStatus(id, clock int64, host, status, stdout, stderr string, alertT
 		})
 	}
 
-	count, err := DBRecordCount(TaskHostDoing{}.TableName(), "id=? and host=? and clock=?", id, host, clock)
+	count, err := TableRecordCount(TaskHostDoing{}.TableName(), "id=? and host=? and clock=?", id, host, clock)
 	if err != nil {
 		return err
 	}
 
 	if count == 0 {
 		// 如果是timeout了，后来任务执行完成之后，结果又上来了，stdout和stderr最好还是存库，让用户看到
-		count, err = DBRecordCount(tht(id), "id=? and host=? and status=?", id, host, "timeout")
+		count, err = TableRecordCount(tht(id), "id=? and host=? and status=?", id, host, "timeout")
 		if err != nil {
 			return err
 		}
@@ -151,15 +151,15 @@ func WaitingHostList(id int64, limit ...int) ([]TaskHost, error) {
 }
 
 func WaitingHostCount(id int64) (int64, error) {
-	return DBRecordCount(tht(id), "id=? and status='waiting'", id)
+	return TableRecordCount(tht(id), "id=? and status='waiting'", id)
 }
 
 func UnexpectedHostCount(id int64) (int64, error) {
-	return DBRecordCount(tht(id), "id=? and status in ('failed', 'timeout', 'killfailed')", id)
+	return TableRecordCount(tht(id), "id=? and status in ('failed', 'timeout', 'killfailed')", id)
 }
 
 func IngStatusHostCount(id int64) (int64, error) {
-	return DBRecordCount(tht(id), "id=? and status in ('waiting', 'running', 'killing')", id)
+	return TableRecordCount(tht(id), "id=? and status in ('waiting', 'running', 'killing')", id)
 }
 
 func RunWaitingHosts(hosts []TaskHost) error {

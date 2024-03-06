@@ -61,7 +61,7 @@ func taskMetaCacheKey(id int64) string {
 }
 
 func TaskMetaGet(where string, args ...interface{}) (*TaskMeta, error) {
-	lst, err := DBRecordGets[[]*TaskMeta](TaskMeta{}.TableName(), where, args...)
+	lst, err := TableRecordGets[[]*TaskMeta](TaskMeta{}.TableName(), where, args...)
 	if err != nil {
 		return nil, err
 	}

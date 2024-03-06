@@ -23,9 +23,9 @@ func loopCacheHostDoing() {
 }
 
 func cacheHostDoing() {
-	doingsFromDb, err := models.DBRecordGets[[]models.TaskHostDoing](models.TaskHostDoing{}.TableName(), "")
+	doingsFromDb, err := models.TableRecordGets[[]models.TaskHostDoing](models.TaskHostDoing{}.TableName(), "")
 	if err != nil {
-		logger.Errorf("models.DBRecordGets fail: %v", err)
+		logger.Errorf("models.TableRecordGets fail: %v", err)
 	}
 
 	ctx := context.Background()

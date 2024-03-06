@@ -3,6 +3,11 @@ package server
 import (
 	"context"
 	"fmt"
+	"os"
+	"os/signal"
+	"path/filepath"
+	"syscall"
+
 	"github.com/ulricqin/ibex/src/pkg/httpx"
 	"github.com/ulricqin/ibex/src/pkg/logx"
 	"github.com/ulricqin/ibex/src/server/config"
@@ -10,10 +15,6 @@ import (
 	"github.com/ulricqin/ibex/src/server/rpc"
 	"github.com/ulricqin/ibex/src/server/timer"
 	"github.com/ulricqin/ibex/src/storage"
-	"os"
-	"os/signal"
-	"path/filepath"
-	"syscall"
 
 	"github.com/toolkits/pkg/i18n"
 )

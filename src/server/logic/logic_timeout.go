@@ -19,7 +19,7 @@ func CheckTimeout(id int64) {
 		return
 	}
 
-	hosts, err := models.DBRecordGets[[]models.TaskHostDoing](models.TaskHostDoing{}.TableName(), "id=?", id)
+	hosts, err := models.TableRecordGets[[]models.TaskHostDoing](models.TaskHostDoing{}.TableName(), "id=?", id)
 	if err != nil {
 		logger.Errorf("cannot get task[%d] doing host list: %v", id, err)
 		return

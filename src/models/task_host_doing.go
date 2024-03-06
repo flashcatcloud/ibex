@@ -48,7 +48,7 @@ func GetDoingCache(host string) []TaskHostDoing {
 	return doingMaps[host]
 }
 
-func IsAlertTriggered(host string, id int64) (exist, isAlertTriggered bool) {
+func CheckExistAndAlertTriggered(host string, id int64) (exist, isAlertTriggered bool) {
 	doingLock.RLock()
 	defer doingLock.RUnlock()
 

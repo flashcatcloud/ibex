@@ -9,9 +9,10 @@ import (
 
 	"github.com/ulricqin/ibex/src/pkg/httpx"
 	"github.com/ulricqin/ibex/src/pkg/logx"
-	"github.com/ulricqin/ibex/src/storage"
 
+	"github.com/ccfos/nightingale/v6/conf"
 	"github.com/ccfos/nightingale/v6/pkg/ormx"
+	"github.com/ccfos/nightingale/v6/storage"
 	"github.com/gin-gonic/gin"
 	"github.com/koding/multiconfig"
 )
@@ -92,7 +93,7 @@ type Config struct {
 	Heartbeat Heartbeat
 	Output    Output
 	IsCenter  bool
-	CenterApi CenterApi
+	CenterApi conf.CenterApi
 	Log       logx.Config
 	HTTP      httpx.Config
 	BasicAuth gin.Accounts
@@ -113,13 +114,6 @@ type Heartbeat struct {
 type Output struct {
 	ComeFrom string
 	AgtdPort int
-}
-
-type CenterApi struct {
-	Addrs         []string
-	BasicAuthUser string
-	BasicAuthPass string
-	Timeout       int64
 }
 
 func (c *Config) IsDebugMode() bool {

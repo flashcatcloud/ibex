@@ -531,10 +531,10 @@ func tableRecordListGet(c *gin.Context) {
 	ginx.BindJSON(c, &f)
 	switch f.Table {
 	case models.TaskHostDoing{}.TableName():
-		lst, err := models.DBRecordGets[[]models.TaskHostDoing](f.Table, f.Where, f.Args)
+		lst, err := models.TableRecordGets[[]models.TaskHostDoing](f.Table, f.Where, f.Args)
 		ginx.NewRender(c).Data(lst, err)
 	case models.TaskMeta{}.TableName():
-		lst, err := models.DBRecordGets[[]models.TaskMeta](f.Table, f.Where, f.Args)
+		lst, err := models.TableRecordGets[[]models.TaskMeta](f.Table, f.Where, f.Args)
 		ginx.NewRender(c).Data(lst, err)
 	default:
 		ginx.Bomb(http.StatusBadRequest, "table[%v] not support", f.Table)
@@ -544,7 +544,7 @@ func tableRecordListGet(c *gin.Context) {
 func tableRecordCount(c *gin.Context) {
 	var f sqlCondForm
 	ginx.BindJSON(c, &f)
-	ginx.NewRender(c).Data(models.DBRecordCount(f.Table, f.Where, f.Args))
+	ginx.NewRender(c).Data(models.TableRecordCount(f.Table, f.Where, f.Args))
 }
 
 type markDoneForm struct {
