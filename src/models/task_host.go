@@ -131,11 +131,11 @@ func MarkDoneStatus(id, clock int64, host, status, stdout, stderr string, alertT
 	})
 }
 
-func CacheMarkDone(ctx context.Context, host TaskHost) error {
-	if err := storage.Cache.Del(ctx, hostDoingCacheKey(host.Id, host.Host)).Err(); err != nil {
+func CacheMarkDone(ctx context.Context, taskHost TaskHost) error {
+	if err := storage.Cache.Del(ctx, hostDoingCacheKey(taskHost.Id, taskHost.Host)).Err(); err != nil {
 		return err
 	}
-	TaskHostCachePush(host)
+	TaskHostCachePush(taskHost)
 
 	return nil
 }
@@ -162,8 +162,8 @@ func IngStatusHostCount(id int64) (int64, error) {
 	return TableRecordCount(tht(id), "id=? and status in ('waiting', 'running', 'killing')", id)
 }
 
-func RunWaitingHosts(hosts []TaskHost) error {
-	count := len(hosts)
+func RunWaitingHosts(taskHosts []TaskHost) error {
+	count := len(taskHosts)
 	if count == 0 {
 		return nil
 	}
@@ -172,10 +172,10 @@ func RunWaitingHosts(hosts []TaskHost) error {
 
 	return DB().Transaction(func(tx *gorm.DB) error {
 		for i := 0; i < count; i++ {
-			if err := tx.Table(tht(hosts[i].Id)).Where("id=? and host=?", hosts[i].Id, hosts[i].Host).Update("status", "running").Error; err != nil {
+			if err := tx.Table(tht(taskHosts[i].Id)).Where("id=? and host=?", taskHosts[i].Id, taskHosts[i].Host).Update("status", "running").Error; err != nil {
 				return err
 			}
-			err := tx.Create(&TaskHostDoing{Id: hosts[i].Id, Host: hosts[i].Host, Clock: now, Action: "start"}).Error
+			err := tx.Create(&TaskHostDoing{Id: taskHosts[i].Id, Host: taskHosts[i].Host, Clock: now, Action: "start"}).Error
 			if err != nil {
 				return err
 			}
@@ -202,11 +202,11 @@ var (
 	taskHostLock  sync.RWMutex
 )
 
-func TaskHostCachePush(th TaskHost) {
+func TaskHostCachePush(taskHost TaskHost) {
 	taskHostLock.Lock()
 	defer taskHostLock.Unlock()
 
-	taskHostCache = append(taskHostCache, th)
+	taskHostCache = append(taskHostCache, taskHost)
 }
 
 func TaskHostCachePopAll() []TaskHost {

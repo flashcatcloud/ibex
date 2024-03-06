@@ -325,7 +325,7 @@ func taskAdd(c *gin.Context) {
 		errorx.Bomb(http.StatusBadRequest, "arg(hosts) empty")
 	}
 
-	meta := &models.TaskMeta{
+	taskMeta := &models.TaskMeta{
 		Title:     f.Title,
 		Account:   f.Account,
 		Batch:     f.Batch,
@@ -338,65 +338,65 @@ func taskAdd(c *gin.Context) {
 		Creator:   f.Creator,
 	}
 
-	err := meta.CleanFields()
+	err := taskMeta.CleanFields()
 	ginx.Dangerous(err)
-	meta.HandleFH(hosts[0])
+	taskMeta.HandleFH(hosts[0])
 
 	authUser := c.MustGet(gin.AuthUserKey).(string)
 	// 任务类型分为"告警规则触发"和"n9e center用户下发"两种；
 	// 告警规则触发的任务不需要schedule，直接执行；
 	// 此外n9e edge无前端界面，调用taskAdd接口肯定是告警规则触发的。
 	if f.AlertTriggered {
-		if err := meta.Create(); err != nil {
+		if err := taskMeta.Create(); err != nil {
 			// 当网络不连通时，生成唯一的id，防止边缘机房中不同任务的id相同；
 			// 方法是，redis自增id去防止同一个机房的不同n9e edge生成的id相同；
 			// 但没法防止不同边缘机房生成同样的id，所以，生成id的数据不会上报存入数据库，只用于闭环执行。
-			meta.Id, err = storage.IdGet()
+			taskMeta.Id, err = storage.IdGet()
 			ginx.Dangerous(err)
 		}
 		if err == nil {
-			t := models.TaskHost{
-				Id:     meta.Id,
+			taskHost := models.TaskHost{
+				Id:     taskMeta.Id,
 				Host:   hosts[0],
 				Status: "running",
 			}
-			if err = t.Create(); err != nil {
-				logger.Warningf("task_add_fail: authUser=%s title=%s err=%s", authUser, meta.Title, err.Error())
+			if err = taskHost.Create(); err != nil {
+				logger.Warningf("task_add_fail: authUser=%s title=%s err=%s", authUser, taskMeta.Title, err.Error())
 			}
 		}
 
-		err = meta.Cache(hosts[0])
+		err = taskMeta.Cache(hosts[0])
 		ginx.Dangerous(err)
 
 	} else {
-		err = meta.Save(hosts, f.Action)
+		err = taskMeta.Save(hosts, f.Action)
 		ginx.Dangerous(err)
 	}
 
-	logger.Infof("task_add_succ: authUser=%s title=%s", authUser, meta.Title)
+	logger.Infof("task_add_succ: authUser=%s title=%s", authUser, taskMeta.Title)
 
-	ginx.NewRender(c).Data(meta.Id, err)
+	ginx.NewRender(c).Data(taskMeta.Id, err)
 }
 
 func taskGet(c *gin.Context) {
-	meta := TaskMeta(ginx.UrlParamInt64(c, "id"))
+	taskMeta := TaskMeta(ginx.UrlParamInt64(c, "id"))
 
-	hosts, err := meta.Hosts()
+	taskHosts, err := taskMeta.Hosts()
 	errorx.Dangerous(err)
 
-	action, err := meta.Action()
+	action, err := taskMeta.Action()
 	errorx.Dangerous(err)
 
 	actionStr := ""
 	if action != nil {
 		actionStr = action.Action
 	} else {
-		meta.Done = true
+		taskMeta.Done = true
 	}
 
 	ginx.NewRender(c).Data(gin.H{
-		"meta":   meta,
-		"hosts":  hosts,
+		"meta":   taskMeta,
+		"hosts":  taskHosts,
 		"action": actionStr,
 	}, nil)
 }
@@ -464,12 +464,12 @@ type actionForm struct {
 }
 
 func taskAction(c *gin.Context) {
-	meta := TaskMeta(ginx.UrlParamInt64(c, "id"))
+	taskMeta := TaskMeta(ginx.UrlParamInt64(c, "id"))
 
 	var f actionForm
 	ginx.BindJSON(c, &f)
 
-	action, err := models.TaskActionGet("id=?", meta.Id)
+	action, err := models.TaskActionGet("id=?", taskMeta.Id)
 	errorx.Dangerous(err)
 
 	if action == nil {
@@ -481,17 +481,17 @@ func taskAction(c *gin.Context) {
 
 func taskHostAction(c *gin.Context) {
 	host := ginx.UrlParamStr(c, "host")
-	meta := TaskMeta(ginx.UrlParamInt64(c, "id"))
+	taskMeta := TaskMeta(ginx.UrlParamInt64(c, "id"))
 
-	noopWhenDone(meta.Id)
+	noopWhenDone(taskMeta.Id)
 
 	var f actionForm
 	ginx.BindJSON(c, &f)
 
 	if f.Action == "ignore" {
-		errorx.Dangerous(meta.IgnoreHost(host))
+		errorx.Dangerous(taskMeta.IgnoreHost(host))
 
-		action, err := models.TaskActionGet("id=?", meta.Id)
+		action, err := models.TaskActionGet("id=?", taskMeta.Id)
 		errorx.Dangerous(err)
 
 		if action != nil && action.Action == "pause" {
@@ -501,22 +501,22 @@ func taskHostAction(c *gin.Context) {
 	}
 
 	if f.Action == "kill" {
-		errorx.Dangerous(meta.KillHost(host))
+		errorx.Dangerous(taskMeta.KillHost(host))
 	}
 
 	if f.Action == "redo" {
-		errorx.Dangerous(meta.RedoHost(host))
+		errorx.Dangerous(taskMeta.RedoHost(host))
 	}
 
 	ginx.NewRender(c).Message(nil)
 }
 
 func noopWhenDone(id int64) {
-	action, err := models.TaskActionGet("id=?", id)
+	taskAction, err := models.TaskActionGet("id=?", id)
 	errorx.Dangerous(err)
 
-	if action == nil {
-		errorx.Bomb(200, "task already finished, no more action can do")
+	if taskAction == nil {
+		errorx.Bomb(200, "task already finished, no more taskAction can do")
 	}
 }
 

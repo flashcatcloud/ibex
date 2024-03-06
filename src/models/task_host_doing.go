@@ -52,8 +52,8 @@ func CheckExistAndAlertTriggered(host string, id int64) (exist, isAlertTriggered
 	doingLock.RLock()
 	defer doingLock.RUnlock()
 
-	hostDoing := doingMaps[host]
-	for _, doing := range hostDoing {
+	doings := doingMaps[host]
+	for _, doing := range doings {
 		if doing.Id == id {
 			exist = true
 			isAlertTriggered = doing.AlertTriggered

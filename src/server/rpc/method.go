@@ -44,14 +44,14 @@ func (*Server) Report(req types.ReportRequest, resp *types.ReportResponse) error
 		}
 	}
 
-	hosts := models.GetDoingCache(req.Ident)
+	doings := models.GetDoingCache(req.Ident)
 
-	tasks := make([]types.AssignTask, 0, len(hosts))
-	for _, h := range hosts {
+	tasks := make([]types.AssignTask, 0, len(doings))
+	for _, doing := range doings {
 		tasks = append(tasks, types.AssignTask{
-			Id:     h.Id,
-			Clock:  h.Clock,
-			Action: h.Action,
+			Id:     doing.Id,
+			Clock:  doing.Clock,
+			Action: doing.Action,
 		})
 	}
 	resp.AssignTasks = tasks
