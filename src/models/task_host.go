@@ -69,8 +69,8 @@ func TaskHostGet(id int64, host string) (*TaskHost, error) {
 	return ret[0], nil
 }
 
-func MarkDoneStatus(id, clock int64, host, status, stdout, stderr string, alertTriggered ...bool) error {
-	if len(alertTriggered) > 0 && alertTriggered[0] {
+func MarkDoneStatus(id, clock int64, host, status, stdout, stderr string, edgeAlertTriggered ...bool) error {
+	if len(edgeAlertTriggered) > 0 && edgeAlertTriggered[0] {
 		return CacheMarkDone(context.Background(), TaskHost{
 			Id:     id,
 			Host:   host,
