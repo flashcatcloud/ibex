@@ -18,12 +18,12 @@ func (TaskHostDoing) TableName() string {
 	return "task_host_doing"
 }
 
-func (t *TaskHostDoing) MarshalBinary() ([]byte, error) {
-	return json.Marshal(t)
+func (doing *TaskHostDoing) MarshalBinary() ([]byte, error) {
+	return json.Marshal(doing)
 }
 
-func (t *TaskHostDoing) UnmarshalBinary(data []byte) error {
-	return json.Unmarshal(data, t)
+func (doing *TaskHostDoing) UnmarshalBinary(data []byte) error {
+	return json.Unmarshal(data, doing)
 }
 
 func hostDoingCacheKey(id int64, host string) string {

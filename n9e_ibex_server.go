@@ -22,13 +22,13 @@ var (
 	HttpPort int
 )
 
-func ServerStart(isCenter bool, db *gorm.DB, rc redis.Cmdable, n9eIbex n9eConf.Ibex, api *n9eConf.CenterApi, r *gin.Engine, httpPort int) {
-	Conf = &n9eIbex
+func ServerStart(isCenter bool, db *gorm.DB, rc redis.Cmdable, n9eIbexConf n9eConf.Ibex, api *n9eConf.CenterApi, r *gin.Engine, httpPort int) {
+	Conf = &n9eIbexConf
 
 	config.C.IsCenter = isCenter
 	config.C.BasicAuth = make(gin.Accounts)
-	config.C.BasicAuth[n9eIbex.BasicAuthUser] = n9eIbex.BasicAuthPass
-	config.C.Heartbeat.LocalAddr = schedulerAddrGet(n9eIbex.RPCListen)
+	config.C.BasicAuth[n9eIbexConf.BasicAuthUser] = n9eIbexConf.BasicAuthPass
+	config.C.Heartbeat.LocalAddr = schedulerAddrGet(n9eIbexConf.RPCListen)
 	HttpPort = httpPort
 
 	router.ConfigRouter(r)
@@ -42,17 +42,18 @@ func ServerStart(isCenter bool, db *gorm.DB, rc redis.Cmdable, n9eIbex n9eConf.I
 		storage.DB = db
 	}
 
-	rpc.Start(n9eIbex.RPCListen)
+	if !isCenter {
+		config.C.CenterApi = *api
+	}
+
+	rpc.Start(n9eIbexConf.RPCListen)
 
 	timer.CacheHostDoing()
 	timer.ReportResult()
-
 	if isCenter {
 		go timer.Heartbeat()
 		go timer.Schedule()
 		go timer.CleanLong()
-	} else {
-		config.C.CenterApi = *api
 	}
 
 }

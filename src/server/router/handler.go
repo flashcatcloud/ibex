@@ -384,12 +384,12 @@ func taskGet(c *gin.Context) {
 	taskHosts, err := taskMeta.Hosts()
 	errorx.Dangerous(err)
 
-	action, err := taskMeta.Action()
+	taskAction, err := taskMeta.Action()
 	errorx.Dangerous(err)
 
 	actionStr := ""
-	if action != nil {
-		actionStr = action.Action
+	if taskAction != nil {
+		actionStr = taskAction.Action
 	} else {
 		taskMeta.Done = true
 	}

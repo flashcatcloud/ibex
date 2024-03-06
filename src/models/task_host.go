@@ -23,18 +23,18 @@ type TaskHost struct {
 	Stderr string `json:"stderr"`
 }
 
-func (t *TaskHost) Upsert() error {
-	return DB().Table(tht(t.Id)).Clauses(clause.OnConflict{
+func (taskHost *TaskHost) Upsert() error {
+	return DB().Table(tht(taskHost.Id)).Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "id"}, {Name: "host"}},
 		DoUpdates: clause.AssignmentColumns([]string{"status", "stdout", "stderr"}),
-	}).Create(t).Error
+	}).Create(taskHost).Error
 }
 
-func (t *TaskHost) Create() error {
+func (taskHost *TaskHost) Create() error {
 	if config.C.IsCenter {
-		return DB().Table(tht(t.Id)).Create(t).Error
+		return DB().Table(tht(taskHost.Id)).Create(taskHost).Error
 	}
-	return poster.PostByUrls(config.C.CenterApi, "/ibex/v1/task/host", t)
+	return poster.PostByUrls(config.C.CenterApi, "/ibex/v1/task/host", taskHost)
 }
 
 func TaskHostUpserts(lst []TaskHost) (map[string]error, error) {
@@ -47,9 +47,9 @@ func TaskHostUpserts(lst []TaskHost) (map[string]error, error) {
 	}
 
 	errs := make(map[string]error, 0)
-	for _, th := range lst {
-		if err := th.Upsert(); err != nil {
-			errs[fmt.Sprintf("%d:%s", th.Id, th.Host)] = err
+	for _, taskHost := range lst {
+		if err := taskHost.Upsert(); err != nil {
+			errs[fmt.Sprintf("%d:%s", taskHost.Id, taskHost.Host)] = err
 		}
 	}
 	return errs, nil
