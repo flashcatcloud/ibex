@@ -344,9 +344,8 @@ func taskAdd(c *gin.Context) {
 
 	authUser := c.MustGet(gin.AuthUserKey).(string)
 	// 任务类型分为"告警规则触发"和"n9e center用户下发"两种；
-	// 告警规则触发的任务不需要schedule，直接执行；
-	// 此外n9e edge无前端界面，调用taskAdd接口肯定是告警规则触发的。
-	if f.AlertTriggered {
+	// 边缘机房"告警规则触发"的任务不需要规划，并且它可能是失联的，无法使用db资源，所以放入redis缓存中，直接下发给agentd执行
+	if !config.C.IsCenter && f.AlertTriggered {
 		if err := taskMeta.Create(); err != nil {
 			// 当网络不连通时，生成唯一的id，防止边缘机房中不同任务的id相同；
 			// 方法是，redis自增id去防止同一个机房的不同n9e edge生成的id相同；
