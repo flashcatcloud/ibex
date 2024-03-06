@@ -2,6 +2,7 @@ package timer
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/ulricqin/ibex/src/models"
@@ -11,18 +12,22 @@ import (
 
 // CacheHostDoing 缓存task_host_doing表全部内容，减轻DB压力
 func CacheHostDoing() {
-	cacheHostDoing()
+	if err := cacheHostDoing(); err != nil {
+		fmt.Println("cannot cache task_host_doing data: ", err)
+	}
 	go loopCacheHostDoing()
 }
 
 func loopCacheHostDoing() {
 	for {
 		time.Sleep(time.Millisecond * 400)
-		cacheHostDoing()
+		if err := cacheHostDoing(); err != nil {
+			logger.Warning("cannot cache task_host_doing data: ", err)
+		}
 	}
 }
 
-func cacheHostDoing() {
+func cacheHostDoing() error {
 	doingsFromDb, err := models.TableRecordGets[[]models.TaskHostDoing](models.TaskHostDoing{}.TableName(), "")
 	if err != nil {
 		logger.Errorf("models.TableRecordGets fail: %v", err)
@@ -49,4 +54,6 @@ func cacheHostDoing() {
 	}
 
 	models.SetDoingCache(set)
+
+	return err
 }

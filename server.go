@@ -38,6 +38,9 @@ func ServerStart(isCenter bool, db *gorm.DB, rc redis.Cmdable, n9eIbex n9eConf.I
 		fmt.Println("cannot init id generator: ", err)
 		os.Exit(1)
 	}
+	if isCenter {
+		storage.DB = db
+	}
 
 	rpc.Start(n9eIbex.RPCListen)
 
@@ -45,7 +48,6 @@ func ServerStart(isCenter bool, db *gorm.DB, rc redis.Cmdable, n9eIbex n9eConf.I
 	timer.ReportResult()
 
 	if isCenter {
-		storage.DB = db
 		go timer.Heartbeat()
 		go timer.Schedule()
 		go timer.CleanLong()
