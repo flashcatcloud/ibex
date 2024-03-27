@@ -5,9 +5,9 @@ import (
 	"log"
 	"time"
 
-	"github.com/flashcatcloud/ibex/src/agentd/client"
-	"github.com/flashcatcloud/ibex/src/agentd/config"
-	"github.com/flashcatcloud/ibex/src/types"
+	"github.com/ulricqin/ibex/src/agentd/client"
+	"github.com/ulricqin/ibex/src/agentd/config"
+	"github.com/ulricqin/ibex/src/types"
 )
 
 func Heartbeat(ctx context.Context) {

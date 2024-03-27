@@ -11,10 +11,10 @@ import (
 
 	"github.com/toolkits/pkg/i18n"
 
-	"github.com/flashcatcloud/ibex/src/agentd/config"
-	"github.com/flashcatcloud/ibex/src/agentd/router"
-	"github.com/flashcatcloud/ibex/src/agentd/timer"
-	"github.com/flashcatcloud/ibex/src/pkg/httpx"
+	"github.com/ulricqin/ibex/src/agentd/config"
+	"github.com/ulricqin/ibex/src/agentd/router"
+	"github.com/ulricqin/ibex/src/agentd/timer"
+	"github.com/ulricqin/ibex/src/pkg/httpx"
 )
 
 type Agentd struct {

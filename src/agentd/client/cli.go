@@ -12,7 +12,7 @@ import (
 	"github.com/toolkits/pkg/net/gobrpc"
 	"github.com/ugorji/go/codec"
 
-	"github.com/flashcatcloud/ibex/src/agentd/config"
+	"github.com/ulricqin/ibex/src/agentd/config"
 )
 
 var cli *gobrpc.RPCClient

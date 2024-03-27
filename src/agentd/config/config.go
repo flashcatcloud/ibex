@@ -11,7 +11,7 @@ import (
 	"github.com/koding/multiconfig"
 	"github.com/toolkits/pkg/file"
 
-	"github.com/flashcatcloud/ibex/src/pkg/httpx"
+	"github.com/ulricqin/ibex/src/pkg/httpx"
 )
 
 var (

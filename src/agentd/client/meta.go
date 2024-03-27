@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/flashcatcloud/ibex/src/types"
+	"github.com/ulricqin/ibex/src/types"
 )
 
 // Meta 从Server端获取任务元信息

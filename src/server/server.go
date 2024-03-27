@@ -12,13 +12,13 @@ import (
 	"github.com/toolkits/pkg/cache"
 	"github.com/toolkits/pkg/i18n"
 
-	"github.com/flashcatcloud/ibex/src/pkg/httpx"
-	"github.com/flashcatcloud/ibex/src/pkg/logx"
-	"github.com/flashcatcloud/ibex/src/server/config"
-	"github.com/flashcatcloud/ibex/src/server/router"
-	"github.com/flashcatcloud/ibex/src/server/rpc"
-	"github.com/flashcatcloud/ibex/src/server/timer"
-	"github.com/flashcatcloud/ibex/src/storage"
+	"github.com/ulricqin/ibex/src/pkg/httpx"
+	"github.com/ulricqin/ibex/src/pkg/logx"
+	"github.com/ulricqin/ibex/src/server/config"
+	"github.com/ulricqin/ibex/src/server/router"
+	"github.com/ulricqin/ibex/src/server/rpc"
+	"github.com/ulricqin/ibex/src/server/timer"
+	"github.com/ulricqin/ibex/src/storage"
 )
 
 type Server struct {

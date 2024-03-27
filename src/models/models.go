@@ -5,7 +5,7 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/flashcatcloud/ibex/src/storage"
+	"github.com/ulricqin/ibex/src/storage"
 )
 
 func DB() *gorm.DB {

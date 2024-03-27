@@ -1,7 +1,7 @@
 package storage
 
 import (
-	"github.com/flashcatcloud/ibex/src/pkg/ormx"
+	"github.com/ulricqin/ibex/src/pkg/ormx"
 
 	"gorm.io/gorm"
 )

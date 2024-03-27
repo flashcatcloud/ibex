@@ -6,14 +6,14 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/flashcatcloud/ibex/src/models"
-	"github.com/flashcatcloud/ibex/src/server/config"
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/errorx"
 	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/slice"
 	"github.com/toolkits/pkg/str"
+	"github.com/ulricqin/ibex/src/models"
+	"github.com/ulricqin/ibex/src/server/config"
 )
 
 func taskStdout(c *gin.Context) {
