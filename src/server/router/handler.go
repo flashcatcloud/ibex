@@ -364,10 +364,12 @@ func taskAdd(c *gin.Context) {
 			}
 		}
 
+		// 缓存任务元信息和待下发的任务
 		err = taskMeta.Cache(hosts[0])
 		ginx.Dangerous(err)
 
 	} else {
+		// 如果是中心机房，还是保持之前的逻辑
 		err = taskMeta.Save(hosts, f.Action)
 		ginx.Dangerous(err)
 	}
@@ -378,24 +380,24 @@ func taskAdd(c *gin.Context) {
 }
 
 func taskGet(c *gin.Context) {
-	taskMeta := TaskMeta(ginx.UrlParamInt64(c, "id"))
+	meta := TaskMeta(ginx.UrlParamInt64(c, "id"))
 
-	taskHosts, err := taskMeta.Hosts()
+	hosts, err := meta.Hosts()
 	errorx.Dangerous(err)
 
-	taskAction, err := taskMeta.Action()
+	action, err := meta.Action()
 	errorx.Dangerous(err)
 
 	actionStr := ""
-	if taskAction != nil {
-		actionStr = taskAction.Action
+	if action != nil {
+		actionStr = action.Action
 	} else {
-		taskMeta.Done = true
+		meta.Done = true
 	}
 
 	ginx.NewRender(c).Data(gin.H{
-		"meta":   taskMeta,
-		"hosts":  taskHosts,
+		"meta":   meta,
+		"hosts":  hosts,
 		"action": actionStr,
 	}, nil)
 }
@@ -463,12 +465,12 @@ type actionForm struct {
 }
 
 func taskAction(c *gin.Context) {
-	taskMeta := TaskMeta(ginx.UrlParamInt64(c, "id"))
+	meta := TaskMeta(ginx.UrlParamInt64(c, "id"))
 
 	var f actionForm
 	ginx.BindJSON(c, &f)
 
-	action, err := models.TaskActionGet("id=?", taskMeta.Id)
+	action, err := models.TaskActionGet("id=?", meta.Id)
 	errorx.Dangerous(err)
 
 	if action == nil {
@@ -480,17 +482,17 @@ func taskAction(c *gin.Context) {
 
 func taskHostAction(c *gin.Context) {
 	host := ginx.UrlParamStr(c, "host")
-	taskMeta := TaskMeta(ginx.UrlParamInt64(c, "id"))
+	meta := TaskMeta(ginx.UrlParamInt64(c, "id"))
 
-	noopWhenDone(taskMeta.Id)
+	noopWhenDone(meta.Id)
 
 	var f actionForm
 	ginx.BindJSON(c, &f)
 
 	if f.Action == "ignore" {
-		errorx.Dangerous(taskMeta.IgnoreHost(host))
+		errorx.Dangerous(meta.IgnoreHost(host))
 
-		action, err := models.TaskActionGet("id=?", taskMeta.Id)
+		action, err := models.TaskActionGet("id=?", meta.Id)
 		errorx.Dangerous(err)
 
 		if action != nil && action.Action == "pause" {
@@ -500,21 +502,21 @@ func taskHostAction(c *gin.Context) {
 	}
 
 	if f.Action == "kill" {
-		errorx.Dangerous(taskMeta.KillHost(host))
+		errorx.Dangerous(meta.KillHost(host))
 	}
 
 	if f.Action == "redo" {
-		errorx.Dangerous(taskMeta.RedoHost(host))
+		errorx.Dangerous(meta.RedoHost(host))
 	}
 
 	ginx.NewRender(c).Message(nil)
 }
 
 func noopWhenDone(id int64) {
-	taskAction, err := models.TaskActionGet("id=?", id)
+	action, err := models.TaskActionGet("id=?", id)
 	errorx.Dangerous(err)
 
-	if taskAction == nil {
+	if action == nil {
 		errorx.Bomb(200, "task already finished, no more taskAction can do")
 	}
 }

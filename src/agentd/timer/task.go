@@ -10,12 +10,12 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/ulricqin/ibex/src/agentd/client"
-	"github.com/ulricqin/ibex/src/agentd/config"
-
 	"github.com/toolkits/pkg/file"
 	"github.com/toolkits/pkg/runner"
 	"github.com/toolkits/pkg/sys"
+
+	"github.com/ulricqin/ibex/src/agentd/client"
+	"github.com/ulricqin/ibex/src/agentd/config"
 )
 
 type Task struct {

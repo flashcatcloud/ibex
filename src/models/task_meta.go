@@ -101,60 +101,60 @@ func TaskMetaCacheGet(id int64) (*TaskMeta, error) {
 	return meta, err
 }
 
-func (taskMeta *TaskMeta) CleanFields() error {
-	if taskMeta.Batch < 0 {
+func (m *TaskMeta) CleanFields() error {
+	if m.Batch < 0 {
 		return fmt.Errorf("arg(batch) should be nonnegative")
 	}
 
-	if taskMeta.Tolerance < 0 {
+	if m.Tolerance < 0 {
 		return fmt.Errorf("arg(tolerance) should be nonnegative")
 	}
 
-	if taskMeta.Timeout < 0 {
+	if m.Timeout < 0 {
 		return fmt.Errorf("arg(timeout) should be nonnegative")
 	}
 
-	if taskMeta.Timeout > 3600*24 {
+	if m.Timeout > 3600*24 {
 		return fmt.Errorf("arg(timeout) longer than one day")
 	}
 
-	if taskMeta.Timeout == 0 {
-		taskMeta.Timeout = 30
+	if m.Timeout == 0 {
+		m.Timeout = 30
 	}
 
-	taskMeta.Pause = strings.Replace(taskMeta.Pause, "，", ",", -1)
-	taskMeta.Pause = strings.Replace(taskMeta.Pause, " ", "", -1)
-	taskMeta.Args = strings.Replace(taskMeta.Args, "，", ",", -1)
+	m.Pause = strings.Replace(m.Pause, "，", ",", -1)
+	m.Pause = strings.Replace(m.Pause, " ", "", -1)
+	m.Args = strings.Replace(m.Args, "，", ",", -1)
 
-	if taskMeta.Title == "" {
+	if m.Title == "" {
 		return fmt.Errorf("arg(title) is required")
 	}
 
-	if str.Dangerous(taskMeta.Title) {
+	if str.Dangerous(m.Title) {
 		return fmt.Errorf("arg(title) is dangerous")
 	}
 
-	if taskMeta.Script == "" {
+	if m.Script == "" {
 		return fmt.Errorf("arg(script) is required")
 	}
 
-	if str.Dangerous(taskMeta.Args) {
+	if str.Dangerous(m.Args) {
 		return fmt.Errorf("arg(args) is dangerous")
 	}
 
-	if str.Dangerous(taskMeta.Pause) {
+	if str.Dangerous(m.Pause) {
 		return fmt.Errorf("arg(pause) is dangerous")
 	}
 
 	return nil
 }
 
-func (taskMeta *TaskMeta) HandleFH(fh string) {
-	i := strings.Index(taskMeta.Title, " FH: ")
+func (m *TaskMeta) HandleFH(fh string) {
+	i := strings.Index(m.Title, " FH: ")
 	if i > 0 {
-		taskMeta.Title = taskMeta.Title[:i]
+		m.Title = m.Title[:i]
 	}
-	taskMeta.Title = taskMeta.Title + " FH: " + fh
+	m.Title = m.Title + " FH: " + fh
 }
 
 func (taskMeta *TaskMeta) Cache(host string) error {
@@ -211,18 +211,18 @@ func (taskMeta *TaskMeta) Save(hosts []string, action string) error {
 	})
 }
 
-func (taskMeta *TaskMeta) Action() (*TaskAction, error) {
-	return TaskActionGet("id=?", taskMeta.Id)
+func (m *TaskMeta) Action() (*TaskAction, error) {
+	return TaskActionGet("id=?", m.Id)
 }
 
-func (taskMeta *TaskMeta) Hosts() ([]TaskHost, error) {
+func (m *TaskMeta) Hosts() ([]TaskHost, error) {
 	var ret []TaskHost
-	err := DB().Table(tht(taskMeta.Id)).Where("id=?", taskMeta.Id).Select("id", "host", "status").Order("ii").Find(&ret).Error
+	err := DB().Table(tht(m.Id)).Where("id=?", m.Id).Select("id", "host", "status").Order("ii").Find(&ret).Error
 	return ret, err
 }
 
-func (taskMeta *TaskMeta) KillHost(host string) error {
-	bean, err := TaskHostGet(taskMeta.Id, host)
+func (m *TaskMeta) KillHost(host string) error {
+	bean, err := TaskHostGet(m.Id, host)
 	if err != nil {
 		return err
 	}
@@ -235,19 +235,19 @@ func (taskMeta *TaskMeta) KillHost(host string) error {
 		return fmt.Errorf("current status cannot kill")
 	}
 
-	if err := redoHost(taskMeta.Id, host, "kill"); err != nil {
+	if err := redoHost(m.Id, host, "kill"); err != nil {
 		return err
 	}
 
-	return statusSet(taskMeta.Id, host, "killing")
+	return statusSet(m.Id, host, "killing")
 }
 
-func (taskMeta *TaskMeta) IgnoreHost(host string) error {
-	return statusSet(taskMeta.Id, host, "ignored")
+func (m *TaskMeta) IgnoreHost(host string) error {
+	return statusSet(m.Id, host, "ignored")
 }
 
-func (taskMeta *TaskMeta) RedoHost(host string) error {
-	bean, err := TaskHostGet(taskMeta.Id, host)
+func (m *TaskMeta) RedoHost(host string) error {
+	bean, err := TaskHostGet(m.Id, host)
 	if err != nil {
 		return err
 	}
@@ -256,11 +256,11 @@ func (taskMeta *TaskMeta) RedoHost(host string) error {
 		return fmt.Errorf("no such host")
 	}
 
-	if err := redoHost(taskMeta.Id, host, "start"); err != nil {
+	if err := redoHost(m.Id, host, "start"); err != nil {
 		return err
 	}
 
-	return statusSet(taskMeta.Id, host, "running")
+	return statusSet(m.Id, host, "running")
 }
 
 func statusSet(id int64, host, status string) error {
@@ -290,21 +290,21 @@ func redoHost(id int64, host, action string) error {
 	return err
 }
 
-func (taskMeta *TaskMeta) HostStrs() ([]string, error) {
+func (m *TaskMeta) HostStrs() ([]string, error) {
 	var ret []string
-	err := DB().Table(tht(taskMeta.Id)).Where("id=?", taskMeta.Id).Order("ii").Pluck("host", &ret).Error
+	err := DB().Table(tht(m.Id)).Where("id=?", m.Id).Order("ii").Pluck("host", &ret).Error
 	return ret, err
 }
 
-func (taskMeta *TaskMeta) Stdouts() ([]TaskHost, error) {
+func (m *TaskMeta) Stdouts() ([]TaskHost, error) {
 	var ret []TaskHost
-	err := DB().Table(tht(taskMeta.Id)).Where("id=?", taskMeta.Id).Select("id", "host", "status", "stdout").Order("ii").Find(&ret).Error
+	err := DB().Table(tht(m.Id)).Where("id=?", m.Id).Select("id", "host", "status", "stdout").Order("ii").Find(&ret).Error
 	return ret, err
 }
 
-func (taskMeta *TaskMeta) Stderrs() ([]TaskHost, error) {
+func (m *TaskMeta) Stderrs() ([]TaskHost, error) {
 	var ret []TaskHost
-	err := DB().Table(tht(taskMeta.Id)).Where("id=?", taskMeta.Id).Select("id", "host", "status", "stderr").Order("ii").Find(&ret).Error
+	err := DB().Table(tht(m.Id)).Where("id=?", m.Id).Select("id", "host", "status", "stderr").Order("ii").Find(&ret).Error
 	return ret, err
 }
 
