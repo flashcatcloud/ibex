@@ -73,12 +73,12 @@ func KillTask(id int64) error {
 	})
 }
 
-func (a *TaskAction) Update(action string) error {
+func (taskAction *TaskAction) Update(action string) error {
 	if !(action == "start" || action == "cancel" || action == "kill" || action == "pause") {
 		return fmt.Errorf("action invalid")
 	}
 
-	err := DB().Model(a).Updates(map[string]interface{}{
+	err := DB().Model(taskAction).Updates(map[string]interface{}{
 		"action": action,
 		"clock":  time.Now().Unix(),
 	}).Error
@@ -87,15 +87,15 @@ func (a *TaskAction) Update(action string) error {
 	}
 
 	if action == "start" {
-		return StartTask(a.Id)
+		return StartTask(taskAction.Id)
 	}
 
 	if action == "cancel" {
-		return CancelTask(a.Id)
+		return CancelTask(taskAction.Id)
 	}
 
 	if action == "kill" {
-		return KillTask(a.Id)
+		return KillTask(taskAction.Id)
 	}
 
 	return nil

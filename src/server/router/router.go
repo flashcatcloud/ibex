@@ -2,14 +2,15 @@ package router
 
 import (
 	"fmt"
+
 	"os"
 	"strings"
 
-	"github.com/gin-contrib/pprof"
-	"github.com/gin-gonic/gin"
-
 	"github.com/ulricqin/ibex/src/pkg/aop"
 	"github.com/ulricqin/ibex/src/server/config"
+
+	"github.com/gin-contrib/pprof"
+	"github.com/gin-gonic/gin"
 )
 
 func New(version string) *gin.Engine {
@@ -31,12 +32,13 @@ func New(version string) *gin.Engine {
 		r.Use(loggerMid)
 	}
 
-	configRoute(r, version)
+	configBaseRouter(r, version)
+	ConfigRouter(r)
 
 	return r
 }
 
-func configRoute(r *gin.Engine, version string) {
+func configBaseRouter(r *gin.Engine, version string) {
 	if config.C.HTTP.PProf {
 		pprof.Register(r, "/debug/pprof")
 	}
@@ -56,7 +58,9 @@ func configRoute(r *gin.Engine, version string) {
 	r.GET("/version", func(c *gin.Context) {
 		c.String(200, version)
 	})
+}
 
+func ConfigRouter(r *gin.Engine) {
 	api := r.Group("/ibex/v1", gin.BasicAuth(config.C.BasicAuth))
 	{
 		api.POST("/tasks", taskAdd)
@@ -76,5 +80,13 @@ func configRoute(r *gin.Engine, version string) {
 		api.GET("/task/:id/stderr.txt", taskStderrTxt)
 		api.GET("/task/:id/stdout.json", taskStdoutJSON)
 		api.GET("/task/:id/stderr.json", taskStderrJSON)
+
+		// api for edge server
+		api.POST("/table/record/list", tableRecordListGet)
+		api.POST("/table/record/count", tableRecordCount)
+		api.POST("/mark/done", markDone)
+		api.POST("/task/meta", taskMetaAdd)
+		api.POST("/task/host/", taskHostAdd)
+		api.POST("/task/hosts/upsert", taskHostUpsert)
 	}
 }

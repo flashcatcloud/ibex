@@ -3,10 +3,10 @@ package timer
 import (
 	"time"
 
-	"github.com/toolkits/pkg/logger"
-
 	"github.com/ulricqin/ibex/src/models"
 	"github.com/ulricqin/ibex/src/server/config"
+
+	"github.com/toolkits/pkg/logger"
 )
 
 func Heartbeat() {

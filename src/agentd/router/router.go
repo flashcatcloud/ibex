@@ -5,11 +5,11 @@ import (
 	"os"
 	"strings"
 
-	"github.com/gin-contrib/pprof"
-	"github.com/gin-gonic/gin"
-
 	"github.com/ulricqin/ibex/src/agentd/config"
 	"github.com/ulricqin/ibex/src/pkg/aop"
+
+	"github.com/gin-contrib/pprof"
+	"github.com/gin-gonic/gin"
 )
 
 func New(version string) *gin.Engine {

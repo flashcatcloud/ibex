@@ -3,8 +3,9 @@ package timer
 import (
 	"time"
 
-	"github.com/toolkits/pkg/logger"
 	"github.com/ulricqin/ibex/src/models"
+
+	"github.com/toolkits/pkg/logger"
 )
 
 func CleanLong() {
@@ -18,7 +19,7 @@ func CleanLong() {
 func cleanLongTask() {
 	ids, err := models.LongTaskIds()
 	if err != nil {
-		logger.Errorf("LongTaskIds:", err)
+		logger.Error("LongTaskIds:", err)
 		return
 	}
 

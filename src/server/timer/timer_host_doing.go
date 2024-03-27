@@ -1,46 +1,59 @@
 package timer
 
 import (
+	"context"
 	"fmt"
-	"os"
 	"time"
 
-	"github.com/toolkits/pkg/logger"
 	"github.com/ulricqin/ibex/src/models"
+
+	"github.com/toolkits/pkg/logger"
 )
 
 // CacheHostDoing 缓存task_host_doing表全部内容，减轻DB压力
 func CacheHostDoing() {
-	err := cacheHostDoing()
-	if err != nil {
-		fmt.Println("cannot cache host_doing", err)
-		os.Exit(1)
+	if err := cacheHostDoing(); err != nil {
+		fmt.Println("cannot cache task_host_doing data: ", err)
 	}
-
 	go loopCacheHostDoing()
 }
 
 func loopCacheHostDoing() {
 	for {
 		time.Sleep(time.Millisecond * 400)
-		cacheHostDoing()
+		if err := cacheHostDoing(); err != nil {
+			logger.Warning("cannot cache task_host_doing data: ", err)
+		}
 	}
 }
 
 func cacheHostDoing() error {
-	lst, err := models.DoingHostList("")
+	doingsFromDb, err := models.TableRecordGets[[]models.TaskHostDoing](models.TaskHostDoing{}.TableName(), "")
 	if err != nil {
-		logger.Errorf("models.DoingHostList fail: %v", err)
-		return err
+		logger.Errorf("models.TableRecordGets fail: %v", err)
 	}
 
-	cnt := len(lst)
-	set := make(map[string][]models.TaskHostDoing, cnt)
+	ctx := context.Background()
+	keys, err := models.CacheKeyGets(ctx, "host:doing:*")
+	if err != nil {
+		logger.Errorf("models.CacheKeyGets fail: %v", err)
+	}
+	doingsFromRedis, err := models.CacheRecordGets[models.TaskHostDoing](ctx, keys)
+	if err != nil {
+		logger.Errorf("models.CacheRecordGets fail: %v", err)
+	}
 
-	for i := 0; i < cnt; i++ {
-		set[lst[i].Host] = append(set[lst[i].Host], lst[i])
+	set := make(map[string][]models.TaskHostDoing)
+	for _, doing := range doingsFromDb {
+		doing.AlertTriggered = false
+		set[doing.Host] = append(set[doing.Host], doing)
+	}
+	for _, doing := range doingsFromRedis {
+		doing.AlertTriggered = true
+		set[doing.Host] = append(set[doing.Host], doing)
 	}
 
 	models.SetDoingCache(set)
-	return nil
+
+	return err
 }
