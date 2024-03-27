@@ -61,6 +61,26 @@ func configBaseRouter(r *gin.Engine, version string) {
 }
 
 func ConfigRouter(r *gin.Engine) {
+
+	pagesPrefix := "/api/n9e/busi-group/:id"
+	pages := r.Group(pagesPrefix)
+	{
+		pages.GET("/task/:id", taskGet)
+		pages.PUT("/task/:id/action", taskAction)
+		pages.GET("/task/:id/stdout", taskStdout)
+		pages.GET("/task/:id/stderr", taskStderr)
+		pages.GET("/task/:id/state", taskState)
+		pages.GET("/task/:id/result", taskResult)
+		pages.PUT("/task/:id/host/:host/action", taskHostAction)
+		pages.GET("/task/:id/host/:host/output", taskHostOutput)
+		pages.GET("/task/:id/host/:host/stdout", taskHostStdout)
+		pages.GET("/task/:id/host/:host/stderr", taskHostStderr)
+		pages.GET("/task/:id/stdout.txt", taskStdoutTxt)
+		pages.GET("/task/:id/stderr.txt", taskStderrTxt)
+		pages.GET("/task/:id/stdout.json", taskStdoutJSON)
+		pages.GET("/task/:id/stderr.json", taskStderrJSON)
+	}
+
 	api := r.Group("/ibex/v1", gin.BasicAuth(config.C.BasicAuth))
 	{
 		api.POST("/tasks", taskAdd)

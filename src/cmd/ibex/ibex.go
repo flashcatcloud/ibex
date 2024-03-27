@@ -18,17 +18,14 @@ import (
 )
 
 var (
-	Conf     *n9eConf.Ibex
 	HttpPort int
 )
 
-func ServerStart(isCenter bool, db *gorm.DB, rc redis.Cmdable, n9eIbexConf n9eConf.Ibex, api *n9eConf.CenterApi, r *gin.Engine, httpPort int) {
-	Conf = &n9eIbexConf
-
+func ServerStart(isCenter bool, db *gorm.DB, rc redis.Cmdable, rpcListen string, api *n9eConf.CenterApi, r *gin.Engine, httpPort int) {
 	config.C.IsCenter = isCenter
 	config.C.BasicAuth = make(gin.Accounts)
-	config.C.BasicAuth[n9eIbexConf.BasicAuthUser] = n9eIbexConf.BasicAuthPass
-	config.C.Heartbeat.LocalAddr = schedulerAddrGet(n9eIbexConf.RPCListen)
+	config.C.BasicAuth[api.BasicAuthUser] = api.BasicAuthPass
+	config.C.Heartbeat.LocalAddr = schedulerAddrGet(rpcListen)
 	HttpPort = httpPort
 
 	router.ConfigRouter(r)
@@ -46,7 +43,7 @@ func ServerStart(isCenter bool, db *gorm.DB, rc redis.Cmdable, n9eIbexConf n9eCo
 		config.C.CenterApi = *api
 	}
 
-	rpc.Start(n9eIbexConf.RPCListen)
+	rpc.Start(rpcListen)
 
 	timer.CacheHostDoing()
 	timer.ReportResult()
