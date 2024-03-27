@@ -2,9 +2,10 @@ package models
 
 import (
 	"fmt"
+
 	"gorm.io/gorm"
 
-	"github.com/ulricqin/ibex/src/storage"
+	"github.com/flashcatcloud/ibex/src/storage"
 )
 
 func DB() *gorm.DB {

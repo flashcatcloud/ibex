@@ -3,7 +3,7 @@ package timer
 import (
 	"log"
 
-	"github.com/ulricqin/ibex/src/types"
+	"github.com/flashcatcloud/ibex/src/types"
 )
 
 type LocalTasksT struct {

@@ -3,8 +3,8 @@ package timer
 import (
 	"time"
 
+	"github.com/flashcatcloud/ibex/src/models"
 	"github.com/toolkits/pkg/logger"
-	"github.com/ulricqin/ibex/src/models"
 )
 
 func CleanLong() {

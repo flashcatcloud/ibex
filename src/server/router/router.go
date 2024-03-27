@@ -8,8 +8,8 @@ import (
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 
-	"github.com/ulricqin/ibex/src/pkg/aop"
-	"github.com/ulricqin/ibex/src/server/config"
+	"github.com/flashcatcloud/ibex/src/pkg/aop"
+	"github.com/flashcatcloud/ibex/src/server/config"
 )
 
 func New(version string) *gin.Engine {

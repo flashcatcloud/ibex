@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/flashcatcloud/ibex/src/agentd"
+	"github.com/flashcatcloud/ibex/src/server"
 	"github.com/toolkits/pkg/net/tcpx"
 	"github.com/toolkits/pkg/runner"
-	"github.com/ulricqin/ibex/src/agentd"
-	"github.com/ulricqin/ibex/src/server"
 	"github.com/urfave/cli/v2"
 )
 

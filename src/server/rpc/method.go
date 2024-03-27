@@ -3,9 +3,9 @@ package rpc
 import (
 	"fmt"
 
+	"github.com/flashcatcloud/ibex/src/models"
+	"github.com/flashcatcloud/ibex/src/types"
 	"github.com/toolkits/pkg/logger"
-	"github.com/ulricqin/ibex/src/models"
-	"github.com/ulricqin/ibex/src/types"
 )
 
 // Ping return string 'pong', just for test

@@ -5,8 +5,8 @@ import (
 
 	"github.com/toolkits/pkg/logger"
 
-	"github.com/ulricqin/ibex/src/models"
-	"github.com/ulricqin/ibex/src/server/config"
+	"github.com/flashcatcloud/ibex/src/models"
+	"github.com/flashcatcloud/ibex/src/server/config"
 )
 
 func Heartbeat() {

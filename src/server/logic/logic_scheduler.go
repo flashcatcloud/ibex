@@ -5,7 +5,7 @@ import (
 	"github.com/toolkits/pkg/slice"
 	"github.com/toolkits/pkg/str"
 
-	"github.com/ulricqin/ibex/src/models"
+	"github.com/flashcatcloud/ibex/src/models"
 )
 
 func ScheduleTask(id int64) {

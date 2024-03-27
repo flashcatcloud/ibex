@@ -1,4 +1,4 @@
-module github.com/ulricqin/ibex
+module github.com/flashcatcloud/ibex
 
 go 1.18
 
