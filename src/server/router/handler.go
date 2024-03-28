@@ -2,6 +2,7 @@ package router
 
 import (
 	"fmt"
+	"strconv"
 
 	"io/ioutil"
 	"net/http"
@@ -20,20 +21,20 @@ import (
 )
 
 func taskStdout(c *gin.Context) {
-	meta := TaskMeta(ginx.UrlParamInt64(c, "id"))
+	meta := TaskMeta(UrlParamsInt64(c, "id"))
 	stdouts, err := meta.Stdouts()
 	ginx.NewRender(c).Data(stdouts, err)
 }
 
 func taskStderr(c *gin.Context) {
-	meta := TaskMeta(ginx.UrlParamInt64(c, "id"))
+	meta := TaskMeta(UrlParamsInt64(c, "id"))
 	stderrs, err := meta.Stderrs()
 	ginx.NewRender(c).Data(stderrs, err)
 }
 
 // TODO: 不能只判断task_action，还应该看所有的host执行情况
 func taskState(c *gin.Context) {
-	action, err := models.TaskActionGet("id=?", ginx.UrlParamInt64(c, "id"))
+	action, err := models.TaskActionGet("id=?", UrlParamsInt64(c, "id"))
 	if err != nil {
 		ginx.NewRender(c).Data("", err)
 		return
@@ -48,7 +49,7 @@ func taskState(c *gin.Context) {
 }
 
 func taskResult(c *gin.Context) {
-	id := ginx.UrlParamInt64(c, "id")
+	id := UrlParamsInt64(c, "id")
 
 	hosts, err := models.TaskHostStatus(id)
 	if err != nil {
@@ -66,12 +67,12 @@ func taskResult(c *gin.Context) {
 }
 
 func taskHostOutput(c *gin.Context) {
-	obj, err := models.TaskHostGet(ginx.UrlParamInt64(c, "id"), ginx.UrlParamStr(c, "host"))
+	obj, err := models.TaskHostGet(UrlParamsInt64(c, "id"), ginx.UrlParamStr(c, "host"))
 	ginx.NewRender(c).Data(obj, err)
 }
 
 func taskHostStdout(c *gin.Context) {
-	id := ginx.UrlParamInt64(c, "id")
+	id := UrlParamsInt64(c, "id")
 	host := ginx.UrlParamStr(c, "host")
 
 	if config.C.Output.ComeFrom == "database" || config.C.Output.ComeFrom == "" {
@@ -104,7 +105,7 @@ func taskHostStdout(c *gin.Context) {
 }
 
 func taskHostStderr(c *gin.Context) {
-	id := ginx.UrlParamInt64(c, "id")
+	id := UrlParamsInt64(c, "id")
 	host := ginx.UrlParamStr(c, "host")
 
 	if config.C.Output.ComeFrom == "database" || config.C.Output.ComeFrom == "" {
@@ -137,7 +138,7 @@ func taskHostStderr(c *gin.Context) {
 }
 
 func taskStdoutTxt(c *gin.Context) {
-	id := ginx.UrlParamInt64(c, "id")
+	id := UrlParamsInt64(c, "id")
 
 	meta, err := models.TaskMetaGet("id = ?", id)
 	if err != nil {
@@ -171,7 +172,7 @@ func taskStdoutTxt(c *gin.Context) {
 }
 
 func taskStderrTxt(c *gin.Context) {
-	id := ginx.UrlParamInt64(c, "id")
+	id := UrlParamsInt64(c, "id")
 
 	meta, err := models.TaskMetaGet("id = ?", id)
 	if err != nil {
@@ -215,7 +216,7 @@ type TaskStderrData struct {
 }
 
 func taskStdoutJSON(c *gin.Context) {
-	task := TaskMeta(ginx.UrlParamInt64(c, "id"))
+	task := TaskMeta(UrlParamsInt64(c, "id"))
 
 	host := ginx.QueryStr(c, "host", "")
 
@@ -258,7 +259,7 @@ func taskStdoutJSON(c *gin.Context) {
 }
 
 func taskStderrJSON(c *gin.Context) {
-	task := TaskMeta(ginx.UrlParamInt64(c, "id"))
+	task := TaskMeta(UrlParamsInt64(c, "id"))
 
 	host := ginx.QueryStr(c, "host", "")
 
@@ -380,7 +381,7 @@ func taskAdd(c *gin.Context) {
 }
 
 func taskGet(c *gin.Context) {
-	meta := TaskMeta(ginx.UrlParamInt64(c, "id"))
+	meta := TaskMeta(UrlParamsInt64(c, "id"))
 
 	hosts, err := meta.Hosts()
 	errorx.Dangerous(err)
@@ -465,7 +466,7 @@ type actionForm struct {
 }
 
 func taskAction(c *gin.Context) {
-	meta := TaskMeta(ginx.UrlParamInt64(c, "id"))
+	meta := TaskMeta(UrlParamsInt64(c, "id"))
 
 	var f actionForm
 	ginx.BindJSON(c, &f)
@@ -482,7 +483,7 @@ func taskAction(c *gin.Context) {
 
 func taskHostAction(c *gin.Context) {
 	host := ginx.UrlParamStr(c, "host")
-	meta := TaskMeta(ginx.UrlParamInt64(c, "id"))
+	meta := TaskMeta(UrlParamsInt64(c, "id"))
 
 	noopWhenDone(meta.Id)
 
@@ -580,4 +581,22 @@ func taskHostUpsert(c *gin.Context) {
 	var f []models.TaskHost
 	ginx.BindJSON(c, &f)
 	ginx.NewRender(c).Data(models.TaskHostUpserts(f))
+}
+
+func UrlParamsInt64(c *gin.Context, field string) int64 {
+	var strval string
+	if len(c.Params) == 1 {
+		strval = ginx.UrlParamStr(c, field)
+	} else if len(c.Params) == 2 {
+		strval = c.Params[1].Value
+	} else {
+		errorx.Bomb(http.StatusBadRequest, "url param[%s] is blank", field)
+	}
+
+	intval, err := strconv.ParseInt(strval, 10, 64)
+	if err != nil {
+		errorx.Bomb(http.StatusBadRequest, "cannot convert %s to int64", strval)
+	}
+
+	return intval
 }

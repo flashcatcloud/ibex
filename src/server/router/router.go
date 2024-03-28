@@ -65,7 +65,7 @@ func ConfigRouter(r *gin.Engine, rts ...*router.Router) {
 
 	if len(rts) > 0 {
 		rt := rts[0]
-		pagesPrefix := "/api/n9e/busi-group/:gid"
+		pagesPrefix := "/api/n9e/busi-group/:id"
 		pages := r.Group(pagesPrefix)
 		{
 			pages.GET("/task/:id", rt.Auth(), rt.User(), rt.Perm("/job-tasks"), taskGet)
