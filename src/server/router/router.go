@@ -9,6 +9,7 @@ import (
 	"github.com/ulricqin/ibex/src/pkg/aop"
 	"github.com/ulricqin/ibex/src/server/config"
 
+	"github.com/ccfos/nightingale/v6/center/router"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 )
@@ -60,25 +61,28 @@ func configBaseRouter(r *gin.Engine, version string) {
 	})
 }
 
-func ConfigRouter(r *gin.Engine) {
+func ConfigRouter(r *gin.Engine, rts ...router.Router) {
 
-	pagesPrefix := "/api/n9e/busi-group/:id"
-	pages := r.Group(pagesPrefix)
-	{
-		pages.GET("/task/:id", taskGet)
-		pages.PUT("/task/:id/action", taskAction)
-		pages.GET("/task/:id/stdout", taskStdout)
-		pages.GET("/task/:id/stderr", taskStderr)
-		pages.GET("/task/:id/state", taskState)
-		pages.GET("/task/:id/result", taskResult)
-		pages.PUT("/task/:id/host/:host/action", taskHostAction)
-		pages.GET("/task/:id/host/:host/output", taskHostOutput)
-		pages.GET("/task/:id/host/:host/stdout", taskHostStdout)
-		pages.GET("/task/:id/host/:host/stderr", taskHostStderr)
-		pages.GET("/task/:id/stdout.txt", taskStdoutTxt)
-		pages.GET("/task/:id/stderr.txt", taskStderrTxt)
-		pages.GET("/task/:id/stdout.json", taskStdoutJSON)
-		pages.GET("/task/:id/stderr.json", taskStderrJSON)
+	if len(rts) > 0 {
+		rt := rts[0]
+		pagesPrefix := "/api/n9e/busi-group/:gid"
+		pages := r.Group(pagesPrefix)
+		{
+			pages.GET("/task/:id", rt.Auth(), rt.User(), rt.Perm("/job-tasks"), taskGet)
+			pages.PUT("/task/:id/action", rt.Auth(), rt.User(), rt.Perm("/job-tasks/put"), rt.Bgrw(), taskAction)
+			pages.GET("/task/:id/stdout", rt.Auth(), rt.User(), rt.Perm("/job-tasks"), taskStdout)
+			pages.GET("/task/:id/stderr", rt.Auth(), rt.User(), rt.Perm("/job-tasks"), taskStderr)
+			pages.GET("/task/:id/state", rt.Auth(), rt.User(), rt.Perm("/job-tasks"), taskState)
+			pages.GET("/task/:id/result", rt.Auth(), rt.User(), rt.Perm("/job-tasks"), taskResult)
+			pages.PUT("/task/:id/host/:host/action", rt.Auth(), rt.User(), rt.Perm("/job-tasks/put"), rt.Bgrw(), taskHostAction)
+			pages.GET("/task/:id/host/:host/output", rt.Auth(), rt.User(), rt.Perm("/job-tasks"), taskHostOutput)
+			pages.GET("/task/:id/host/:host/stdout", rt.Auth(), rt.User(), rt.Perm("/job-tasks"), taskHostStdout)
+			pages.GET("/task/:id/host/:host/stderr", rt.Auth(), rt.User(), rt.Perm("/job-tasks"), taskHostStderr)
+			pages.GET("/task/:id/stdout.txt", rt.Auth(), rt.User(), rt.Perm("/job-tasks"), taskStdoutTxt)
+			pages.GET("/task/:id/stderr.txt", rt.Auth(), rt.User(), rt.Perm("/job-tasks"), taskStderrTxt)
+			pages.GET("/task/:id/stdout.json", rt.Auth(), rt.User(), rt.Perm("/job-tasks"), taskStdoutJSON)
+			pages.GET("/task/:id/stderr.json", rt.Auth(), rt.User(), rt.Perm("/job-tasks"), taskStderrJSON)
+		}
 	}
 
 	api := r.Group("/ibex/v1", gin.BasicAuth(config.C.BasicAuth))
