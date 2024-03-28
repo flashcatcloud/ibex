@@ -85,7 +85,10 @@ func ConfigRouter(r *gin.Engine, rts ...*router.Router) {
 		}
 	}
 
-	api := r.Group("/ibex/v1", gin.BasicAuth(config.C.BasicAuth))
+	api := r.Group("/ibex/v1")
+	if len(config.C.BasicAuth) > 0 {
+		api = r.Group("/ibex/v1", gin.BasicAuth(config.C.BasicAuth))
+	}
 	{
 		api.POST("/tasks", taskAdd)
 		api.GET("/tasks", taskGets)

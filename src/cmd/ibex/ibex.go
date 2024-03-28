@@ -22,10 +22,13 @@ var (
 	HttpPort int
 )
 
-func ServerStart(isCenter bool, db *gorm.DB, rc redis.Cmdable, rpcListen string, api *n9eConf.CenterApi, r *gin.Engine, centerRouter *n9eRouter.Router, httpPort int) {
+func ServerStart(isCenter bool, db *gorm.DB, rc redis.Cmdable, rpcListen string, basicAuth gin.Accounts, api *n9eConf.CenterApi, r *gin.Engine, centerRouter *n9eRouter.Router, httpPort int) {
 	config.C.IsCenter = isCenter
 	config.C.BasicAuth = make(gin.Accounts)
-	config.C.BasicAuth[api.BasicAuthUser] = api.BasicAuthPass
+	if len(basicAuth) > 0 {
+		config.C.BasicAuth = basicAuth
+	}
+
 	config.C.Heartbeat.LocalAddr = schedulerAddrGet(rpcListen)
 	HttpPort = httpPort
 
