@@ -11,6 +11,7 @@ import (
 	"github.com/ulricqin/ibex/src/server/timer"
 	"github.com/ulricqin/ibex/src/storage"
 
+	n9eRouter "github.com/ccfos/nightingale/v6/center/router"
 	n9eConf "github.com/ccfos/nightingale/v6/conf"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
@@ -21,14 +22,18 @@ var (
 	HttpPort int
 )
 
-func ServerStart(isCenter bool, db *gorm.DB, rc redis.Cmdable, rpcListen string, api *n9eConf.CenterApi, r *gin.Engine, httpPort int) {
+func ServerStart(isCenter bool, db *gorm.DB, rc redis.Cmdable, rpcListen string, api *n9eConf.CenterApi, r *gin.Engine, centerRouter *n9eRouter.Router, httpPort int) {
 	config.C.IsCenter = isCenter
 	config.C.BasicAuth = make(gin.Accounts)
 	config.C.BasicAuth[api.BasicAuthUser] = api.BasicAuthPass
 	config.C.Heartbeat.LocalAddr = schedulerAddrGet(rpcListen)
 	HttpPort = httpPort
 
-	router.ConfigRouter(r)
+	if centerRouter != nil {
+		router.ConfigRouter(r, centerRouter)
+	} else {
+		router.ConfigRouter(r)
+	}
 
 	storage.Cache = rc
 	if err := storage.IdInit(); err != nil {

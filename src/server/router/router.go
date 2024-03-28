@@ -61,7 +61,7 @@ func configBaseRouter(r *gin.Engine, version string) {
 	})
 }
 
-func ConfigRouter(r *gin.Engine, rts ...router.Router) {
+func ConfigRouter(r *gin.Engine, rts ...*router.Router) {
 
 	if len(rts) > 0 {
 		rt := rts[0]
