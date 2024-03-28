@@ -587,7 +587,7 @@ func UrlParamsInt64(c *gin.Context, field string) int64 {
 	var strval string
 	if len(c.Params) == 1 {
 		strval = ginx.UrlParamStr(c, field)
-	} else if len(c.Params) == 2 {
+	} else if len(c.Params) >= 2 {
 		strval = c.Params[1].Value
 	} else {
 		errorx.Bomb(http.StatusBadRequest, "url param[%s] is blank", field)
