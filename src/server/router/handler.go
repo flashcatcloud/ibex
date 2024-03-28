@@ -584,13 +584,21 @@ func taskHostUpsert(c *gin.Context) {
 }
 
 func UrlParamsInt64(c *gin.Context, field string) int64 {
+
+	var params []gin.Param
+	for _, p := range c.Params {
+		if p.Key == "id" {
+			params = append(params, p)
+		}
+	}
+
 	var strval string
-	if len(c.Params) == 1 {
+	if len(params) == 1 {
 		strval = ginx.UrlParamStr(c, field)
-	} else if len(c.Params) >= 2 {
-		strval = c.Params[1].Value
+	} else if len(params) == 2 {
+		strval = params[1].Value
 	} else {
-		logger.Warningf("url param[%+v] not ok", c.Params)
+		logger.Warningf("url param[%+v] not ok", params)
 		errorx.Bomb(http.StatusBadRequest, "url param[%s] is blank", field)
 	}
 
