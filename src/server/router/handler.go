@@ -590,6 +590,7 @@ func UrlParamsInt64(c *gin.Context, field string) int64 {
 	} else if len(c.Params) >= 2 {
 		strval = c.Params[1].Value
 	} else {
+		logger.Warningf("url param[%+v] not ok", c.Params)
 		errorx.Bomb(http.StatusBadRequest, "url param[%s] is blank", field)
 	}
 
