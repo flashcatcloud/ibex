@@ -10,6 +10,10 @@ import (
 )
 
 func Heartbeat() {
+	if config.C.Heartbeat.Interval == 0 {
+		config.C.Heartbeat.Interval = 1000
+	}
+
 	for {
 		heartbeat()
 		time.Sleep(time.Duration(config.C.Heartbeat.Interval) * time.Millisecond)
