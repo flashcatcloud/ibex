@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/ulricqin/ibex/src/pkg/poster"
-	"github.com/ulricqin/ibex/src/server/config"
-	"github.com/ulricqin/ibex/src/storage"
+	"github.com/flashcatcloud/ibex/src/pkg/poster"
+	"github.com/flashcatcloud/ibex/src/server/config"
+	"github.com/flashcatcloud/ibex/src/storage"
 
 	"gorm.io/gorm"
 )

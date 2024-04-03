@@ -6,8 +6,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/ulricqin/ibex/src/pkg/aop"
-	"github.com/ulricqin/ibex/src/server/config"
+	"github.com/flashcatcloud/ibex/src/pkg/aop"
+	"github.com/flashcatcloud/ibex/src/server/config"
 
 	"github.com/ccfos/nightingale/v6/center/router"
 	"github.com/gin-contrib/pprof"

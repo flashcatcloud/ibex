@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ulricqin/ibex/src/models"
+	"github.com/flashcatcloud/ibex/src/models"
 
 	"github.com/toolkits/pkg/logger"
 )

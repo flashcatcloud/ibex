@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/ulricqin/ibex/src/agentd"
-	"github.com/ulricqin/ibex/src/server"
+	"github.com/flashcatcloud/ibex/src/agentd"
+	"github.com/flashcatcloud/ibex/src/server"
 
 	"github.com/toolkits/pkg/net/tcpx"
 	"github.com/toolkits/pkg/runner"

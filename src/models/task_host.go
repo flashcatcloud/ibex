@@ -6,9 +6,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ulricqin/ibex/src/pkg/poster"
-	"github.com/ulricqin/ibex/src/server/config"
-	"github.com/ulricqin/ibex/src/storage"
+	"github.com/flashcatcloud/ibex/src/pkg/poster"
+	"github.com/flashcatcloud/ibex/src/server/config"
+	"github.com/flashcatcloud/ibex/src/storage"
 
 	"github.com/toolkits/pkg/logger"
 	"gorm.io/gorm"

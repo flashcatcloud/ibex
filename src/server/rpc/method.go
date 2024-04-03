@@ -3,8 +3,8 @@ package rpc
 import (
 	"fmt"
 
-	"github.com/ulricqin/ibex/src/models"
-	"github.com/ulricqin/ibex/src/types"
+	"github.com/flashcatcloud/ibex/src/models"
+	"github.com/flashcatcloud/ibex/src/types"
 
 	"github.com/toolkits/pkg/logger"
 )

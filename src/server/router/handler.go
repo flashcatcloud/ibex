@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ulricqin/ibex/src/models"
-	"github.com/ulricqin/ibex/src/server/config"
-	"github.com/ulricqin/ibex/src/storage"
+	"github.com/flashcatcloud/ibex/src/models"
+	"github.com/flashcatcloud/ibex/src/server/config"
+	"github.com/flashcatcloud/ibex/src/storage"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/errorx"

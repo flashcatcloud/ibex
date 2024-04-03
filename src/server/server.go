@@ -8,13 +8,13 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"github.com/ulricqin/ibex/src/pkg/httpx"
-	"github.com/ulricqin/ibex/src/pkg/logx"
-	"github.com/ulricqin/ibex/src/server/config"
-	"github.com/ulricqin/ibex/src/server/router"
-	"github.com/ulricqin/ibex/src/server/rpc"
-	"github.com/ulricqin/ibex/src/server/timer"
-	"github.com/ulricqin/ibex/src/storage"
+	"github.com/flashcatcloud/ibex/src/pkg/httpx"
+	"github.com/flashcatcloud/ibex/src/pkg/logx"
+	"github.com/flashcatcloud/ibex/src/server/config"
+	"github.com/flashcatcloud/ibex/src/server/router"
+	"github.com/flashcatcloud/ibex/src/server/rpc"
+	"github.com/flashcatcloud/ibex/src/server/timer"
+	"github.com/flashcatcloud/ibex/src/storage"
 
 	"github.com/toolkits/pkg/i18n"
 )
