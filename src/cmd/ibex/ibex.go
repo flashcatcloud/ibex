@@ -51,24 +51,21 @@ func ServerStart(isCenter bool, db *gorm.DB, rc redis.Cmdable, basicAuth gin.Acc
 		fmt.Println("cannot init id generator: ", err)
 		os.Exit(1)
 	}
-	if isCenter {
-		storage.DB = db
-	}
-
-	if !isCenter {
-		config.C.CenterApi = *api
-	}
 
 	rpc.Start(ibex.RPCListen)
 
-	timer.CacheHostDoing()
-	timer.ReportResult()
 	if isCenter {
+		storage.DB = db
+
 		go timer.Heartbeat()
 		go timer.Schedule()
 		go timer.CleanLong()
+	} else {
+		config.C.CenterApi = *api
 	}
 
+	timer.CacheHostDoing()
+	timer.ReportResult()
 }
 
 func schedulerAddrGet(rpcListen string) string {
