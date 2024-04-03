@@ -3,8 +3,8 @@ package models
 import "gorm.io/gorm"
 
 type TaskScheduler struct {
-	Id        int64 `gorm:"primaryKey"`
-	Scheduler string
+	Id        int64  `gorm:"column:id;primaryKey"`
+	Scheduler string `gorm:"column:scheduler;size:128;not null;default:''"`
 }
 
 func (TaskScheduler) TableName() string {

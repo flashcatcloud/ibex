@@ -3,8 +3,8 @@ package logic
 import (
 	"time"
 
+	"github.com/flashcatcloud/ibex/src/models"
 	"github.com/toolkits/pkg/logger"
-	"github.com/ulricqin/ibex/src/models"
 )
 
 func CheckTimeout(id int64) {
@@ -19,7 +19,7 @@ func CheckTimeout(id int64) {
 		return
 	}
 
-	hosts, err := models.DoingHostList("id=?", id)
+	hosts, err := models.TableRecordGets[[]models.TaskHostDoing](models.TaskHostDoing{}.TableName(), "id=?", id)
 	if err != nil {
 		logger.Errorf("cannot get task[%d] doing host list: %v", id, err)
 		return

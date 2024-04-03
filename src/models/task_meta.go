@@ -1,28 +1,33 @@
 package models
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
 
-	"github.com/toolkits/pkg/cache"
+	"github.com/flashcatcloud/ibex/src/pkg/poster"
+	"github.com/flashcatcloud/ibex/src/server/config"
+	"github.com/flashcatcloud/ibex/src/storage"
+
 	"github.com/toolkits/pkg/str"
 	"gorm.io/gorm"
 )
 
 type TaskMeta struct {
-	Id        int64     `json:"id" gorm:"primaryKey"`
-	Title     string    `json:"title"`
-	Account   string    `json:"account"`
-	Batch     int       `json:"batch"`
-	Tolerance int       `json:"tolerance"`
-	Timeout   int       `json:"timeout"`
-	Pause     string    `json:"pause"`
-	Script    string    `json:"script"`
-	Args      string    `json:"args"`
-	Stdin     string    `json:"stdin"`
-	Creator   string    `json:"creator"`
-	Created   time.Time `json:"created" gorm:"->"`
+	Id        int64     `gorm:"column:id;primaryKey;autoIncrement"`
+	Title     string    `gorm:"column:title;size:255;not null;default:''"`
+	Account   string    `gorm:"column:account;size:64;not null"`
+	Batch     int       `gorm:"column:batch;not null;default:0"`
+	Tolerance int       `gorm:"column:tolerance;not null;default:0"`
+	Timeout   int       `gorm:"column:timeout;not null;default:0"`
+	Pause     string    `gorm:"column:pause;size:255;not null;default:''"`
+	Script    string    `gorm:"column:script;type:text;not null"`
+	Args      string    `gorm:"column:args;size:512;not null;default:''"`
+	Stdin     string    `gorm:"column:stdin;size:1024;not null;default:''"`
+	Creator   string    `gorm:"column:creator;size:64;not null;default:'';index"`
+	Created   time.Time `gorm:"column:created;not null;default:CURRENT_TIMESTAMP;type:timestamp;index"`
 	Done      bool      `json:"done" gorm:"-"`
 }
 
@@ -30,32 +35,52 @@ func (TaskMeta) TableName() string {
 	return "task_meta"
 }
 
-func taskMetaCacheKey(k string) string {
-	return fmt.Sprintf("/cache/task/meta/%s", k)
+func (taskMeta *TaskMeta) MarshalBinary() ([]byte, error) {
+	return json.Marshal(taskMeta)
+}
+
+func (taskMeta *TaskMeta) UnmarshalBinary(data []byte) error {
+	return json.Unmarshal(data, taskMeta)
+}
+
+func (taskMeta *TaskMeta) Create() error {
+	if config.C.IsCenter {
+		return DB().Create(taskMeta).Error
+	}
+
+	id, err := poster.PostByUrlsWithResp[int64](config.C.CenterApi, "/ibex/v1/task/meta", taskMeta)
+	if err == nil {
+		taskMeta.Id = id
+	}
+
+	return err
+}
+
+func taskMetaCacheKey(id int64) string {
+	return fmt.Sprintf("task:meta:%d", id)
 }
 
 func TaskMetaGet(where string, args ...interface{}) (*TaskMeta, error) {
-	var arr []*TaskMeta
-	err := DB().Where(where, args...).Find(&arr).Error
+	lst, err := TableRecordGets[[]*TaskMeta](TaskMeta{}.TableName(), where, args...)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(arr) == 0 {
+	if len(lst) == 0 {
 		return nil, nil
 	}
 
-	return arr[0], nil
+	return lst[0], nil
 }
 
-// TaskMetaGet 根据ID获取任务元信息，会用到内存缓存
-func TaskMetaGetByID(id interface{}) (*TaskMeta, error) {
-	var obj TaskMeta
-	if err := cache.Get(taskMetaCacheKey(fmt.Sprint(id)), &obj); err == nil {
-		return &obj, nil
+// TaskMetaGet 根据ID获取任务元信息，会用到缓存
+func TaskMetaGetByID(id int64) (*TaskMeta, error) {
+	meta, err := TaskMetaCacheGet(id)
+	if err == nil {
+		return meta, nil
 	}
 
-	meta, err := TaskMetaGet("id=?", id)
+	meta, err = TaskMetaGet("id=?", id)
 	if err != nil {
 		return nil, err
 	}
@@ -64,9 +89,16 @@ func TaskMetaGetByID(id interface{}) (*TaskMeta, error) {
 		return nil, nil
 	}
 
-	cache.Set(taskMetaCacheKey(fmt.Sprint(id)), *meta, cache.DEFAULT)
+	_, err = storage.Cache.Set(context.Background(), taskMetaCacheKey(id), meta, storage.DEFAULT).Result()
 
-	return meta, nil
+	return meta, err
+}
+
+func TaskMetaCacheGet(id int64) (*TaskMeta, error) {
+	res := storage.Cache.Get(context.Background(), taskMetaCacheKey(id))
+	meta := new(TaskMeta)
+	err := res.Scan(meta)
+	return meta, err
 }
 
 func (m *TaskMeta) CleanFields() error {
@@ -125,19 +157,30 @@ func (m *TaskMeta) HandleFH(fh string) {
 	m.Title = m.Title + " FH: " + fh
 }
 
-func (m *TaskMeta) Save(hosts []string, action string) error {
-	if err := m.CleanFields(); err != nil {
-		return err
-	}
+func (taskMeta *TaskMeta) Cache(host string) error {
+	ctx := context.Background()
 
-	m.HandleFH(hosts[0])
+	tx := storage.Cache.TxPipeline()
+	tx.Set(ctx, taskMetaCacheKey(taskMeta.Id), taskMeta, storage.DEFAULT)
+	tx.Set(ctx, hostDoingCacheKey(taskMeta.Id, host), &TaskHostDoing{
+		Id:     taskMeta.Id,
+		Host:   host,
+		Clock:  time.Now().Unix(),
+		Action: "start",
+	}, storage.DEFAULT)
 
+	_, err := tx.Exec(ctx)
+
+	return err
+}
+
+func (taskMeta *TaskMeta) Save(hosts []string, action string) error {
 	return DB().Transaction(func(tx *gorm.DB) error {
-		if err := tx.Create(m).Error; err != nil {
+		if err := tx.Create(taskMeta).Error; err != nil {
 			return err
 		}
 
-		id := m.Id
+		id := taskMeta.Id
 
 		if err := tx.Create(&TaskScheduler{Id: id}).Error; err != nil {
 			return err

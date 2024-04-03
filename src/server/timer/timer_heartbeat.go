@@ -3,13 +3,17 @@ package timer
 import (
 	"time"
 
-	"github.com/toolkits/pkg/logger"
+	"github.com/flashcatcloud/ibex/src/models"
+	"github.com/flashcatcloud/ibex/src/server/config"
 
-	"github.com/ulricqin/ibex/src/models"
-	"github.com/ulricqin/ibex/src/server/config"
+	"github.com/toolkits/pkg/logger"
 )
 
 func Heartbeat() {
+	if config.C.Heartbeat.Interval == 0 {
+		config.C.Heartbeat.Interval = 1000
+	}
+
 	for {
 		heartbeat()
 		time.Sleep(time.Duration(config.C.Heartbeat.Interval) * time.Millisecond)

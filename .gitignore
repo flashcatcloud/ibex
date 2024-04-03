@@ -18,6 +18,7 @@
 *.cgo2.c
 _cgo_defun.c
 _cgo_gotypes.go
+*_test.go
 _cgo_export.*
 _testmain.go
 _obj
@@ -41,6 +42,4 @@ _test
 .vscode
 .DS_Store
 .cache-loader
-
-/ibex*
 

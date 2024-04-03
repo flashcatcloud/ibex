@@ -7,12 +7,14 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/flashcatcloud/ibex/src/pkg/httpx"
+	"github.com/flashcatcloud/ibex/src/pkg/logx"
+
+	"github.com/ccfos/nightingale/v6/conf"
+	"github.com/ccfos/nightingale/v6/pkg/ormx"
+	"github.com/ccfos/nightingale/v6/storage"
 	"github.com/gin-gonic/gin"
 	"github.com/koding/multiconfig"
-
-	"github.com/ulricqin/ibex/src/pkg/httpx"
-	"github.com/ulricqin/ibex/src/pkg/logx"
-	"github.com/ulricqin/ibex/src/storage"
 )
 
 var (
@@ -90,12 +92,13 @@ type Config struct {
 	RPC       RPC
 	Heartbeat Heartbeat
 	Output    Output
+	IsCenter  bool
+	CenterApi conf.CenterApi
 	Log       logx.Config
 	HTTP      httpx.Config
 	BasicAuth gin.Accounts
-	Gorm      storage.Gorm
-	MySQL     storage.MySQL
-	Postgres  storage.Postgres
+	DB        ormx.DBConfig
+	Cache     storage.RedisConfig
 }
 
 type RPC struct {

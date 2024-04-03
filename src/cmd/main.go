@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/flashcatcloud/ibex/src/agentd"
+	"github.com/flashcatcloud/ibex/src/server"
+
 	"github.com/toolkits/pkg/net/tcpx"
 	"github.com/toolkits/pkg/runner"
-	"github.com/ulricqin/ibex/src/agentd"
-	"github.com/ulricqin/ibex/src/server"
 	"github.com/urfave/cli/v2"
 )
 
@@ -20,13 +21,14 @@ func main() {
 	app.Version = VERSION
 	app.Usage = "Ibex, running scripts on large scale machines"
 	app.Commands = []*cli.Command{
-		newServerCmd(),
+		newCenterServerCmd(),
+		newEdgeServerCmd(),
 		newAgentdCmd(),
 	}
 	app.Run(os.Args)
 }
 
-func newServerCmd() *cli.Command {
+func newCenterServerCmd() *cli.Command {
 	return &cli.Command{
 		Name:  "server",
 		Usage: "Run server",
@@ -48,7 +50,35 @@ func newServerCmd() *cli.Command {
 			}
 			opts = append(opts, server.SetVersion(VERSION))
 
-			server.Run(opts...)
+			server.Run(true, opts...)
+			return nil
+		},
+	}
+}
+
+func newEdgeServerCmd() *cli.Command {
+	return &cli.Command{
+		Name:  "edge server",
+		Usage: "Run edge server",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:    "conf",
+				Aliases: []string{"c"},
+				Usage:   "specify configuration file(.json,.yaml,.toml)",
+			},
+		},
+		Action: func(c *cli.Context) error {
+			printEnv()
+
+			tcpx.WaitHosts()
+
+			var opts []server.ServerOption
+			if c.String("conf") != "" {
+				opts = append(opts, server.SetConfigFile(c.String("conf")))
+			}
+			opts = append(opts, server.SetVersion(VERSION))
+
+			server.Run(false, opts...)
 			return nil
 		},
 	}

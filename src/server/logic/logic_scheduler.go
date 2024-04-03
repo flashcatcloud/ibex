@@ -5,7 +5,7 @@ import (
 	"github.com/toolkits/pkg/slice"
 	"github.com/toolkits/pkg/str"
 
-	"github.com/ulricqin/ibex/src/models"
+	"github.com/flashcatcloud/ibex/src/models"
 )
 
 func ScheduleTask(id int64) {
@@ -104,7 +104,7 @@ func startTask(id int64, action *models.TaskAction) {
 		return
 	}
 
-	doingsCount, err := models.DoingHostCount("id=?", id)
+	doingsCount, err := models.TableRecordCount(models.TaskHostDoing{}.TableName(), "id=?", id)
 	if err != nil {
 		logger.Errorf("cannot get task[%d] doing host count: %v", id, err)
 		return

@@ -3,9 +3,10 @@ package rpc
 import (
 	"fmt"
 
+	"github.com/flashcatcloud/ibex/src/models"
+	"github.com/flashcatcloud/ibex/src/types"
+
 	"github.com/toolkits/pkg/logger"
-	"github.com/ulricqin/ibex/src/models"
-	"github.com/ulricqin/ibex/src/types"
 )
 
 // Ping return string 'pong', just for test
@@ -43,16 +44,18 @@ func (*Server) Report(req types.ReportRequest, resp *types.ReportResponse) error
 		}
 	}
 
-	hosts := models.GetDoingCache(req.Ident)
-	l := len(hosts)
-	tasks := make([]types.AssignTask, l)
-	for i := 0; i < l; i++ {
-		tasks[i].Id = hosts[i].Id
-		tasks[i].Clock = hosts[i].Clock
-		tasks[i].Action = hosts[i].Action
-	}
+	doings := models.GetDoingCache(req.Ident)
 
+	tasks := make([]types.AssignTask, 0, len(doings))
+	for _, doing := range doings {
+		tasks = append(tasks, types.AssignTask{
+			Id:     doing.Id,
+			Clock:  doing.Clock,
+			Action: doing.Action,
+		})
+	}
 	resp.AssignTasks = tasks
+
 	return nil
 }
 
@@ -60,9 +63,15 @@ func handleDoneTask(req types.ReportRequest) error {
 	count := len(req.ReportTasks)
 	for i := 0; i < count; i++ {
 		t := req.ReportTasks[i]
-		err := models.MarkDoneStatus(t.Id, t.Clock, req.Ident, t.Status, t.Stdout, t.Stderr)
+		exist, isEdgeAlertTriggered := models.CheckExistAndEdgeAlertTriggered(req.Ident, t.Id)
+		// ibex agent可能会重复上报结果，如果任务已经不在task_host_doing缓存中了，说明该任务已经MarkDone了，不需要再处理
+		if !exist {
+			continue
+		}
+
+		err := models.MarkDoneStatus(t.Id, t.Clock, req.Ident, t.Status, t.Stdout, t.Stderr, isEdgeAlertTriggered)
 		if err != nil {
-			logger.Errorf("cannot mark task done, id:%d, hostname:%s, clock:%d, status:%s", t.Id, req.Ident, t.Clock, t.Status)
+			logger.Errorf("cannot mark task done, id:%d, hostname:%s, clock:%d, status:%s, err: %v", t.Id, req.Ident, t.Clock, t.Status, err)
 			return err
 		}
 	}

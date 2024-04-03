@@ -9,9 +9,9 @@ import (
 )
 
 type TaskAction struct {
-	Id     int64 `gorm:"primaryKey"`
-	Action string
-	Clock  int64
+	Id     int64  `gorm:"column:id;primaryKey"`
+	Action string `gorm:"column:action;size:32;not null"`
+	Clock  int64  `gorm:"column:clock;not null;default:0"`
 }
 
 func (TaskAction) TableName() string {

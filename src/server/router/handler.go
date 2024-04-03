@@ -2,9 +2,15 @@ package router
 
 import (
 	"fmt"
+	"strconv"
+
 	"io/ioutil"
 	"net/http"
 	"time"
+
+	"github.com/flashcatcloud/ibex/src/models"
+	"github.com/flashcatcloud/ibex/src/server/config"
+	"github.com/flashcatcloud/ibex/src/storage"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/errorx"
@@ -12,25 +18,23 @@ import (
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/slice"
 	"github.com/toolkits/pkg/str"
-	"github.com/ulricqin/ibex/src/models"
-	"github.com/ulricqin/ibex/src/server/config"
 )
 
 func taskStdout(c *gin.Context) {
-	meta := TaskMeta(ginx.UrlParamInt64(c, "id"))
+	meta := TaskMeta(UrlParamsInt64(c, "id"))
 	stdouts, err := meta.Stdouts()
 	ginx.NewRender(c).Data(stdouts, err)
 }
 
 func taskStderr(c *gin.Context) {
-	meta := TaskMeta(ginx.UrlParamInt64(c, "id"))
+	meta := TaskMeta(UrlParamsInt64(c, "id"))
 	stderrs, err := meta.Stderrs()
 	ginx.NewRender(c).Data(stderrs, err)
 }
 
 // TODO: 不能只判断task_action，还应该看所有的host执行情况
 func taskState(c *gin.Context) {
-	action, err := models.TaskActionGet("id=?", ginx.UrlParamInt64(c, "id"))
+	action, err := models.TaskActionGet("id=?", UrlParamsInt64(c, "id"))
 	if err != nil {
 		ginx.NewRender(c).Data("", err)
 		return
@@ -45,7 +49,7 @@ func taskState(c *gin.Context) {
 }
 
 func taskResult(c *gin.Context) {
-	id := ginx.UrlParamInt64(c, "id")
+	id := UrlParamsInt64(c, "id")
 
 	hosts, err := models.TaskHostStatus(id)
 	if err != nil {
@@ -63,12 +67,12 @@ func taskResult(c *gin.Context) {
 }
 
 func taskHostOutput(c *gin.Context) {
-	obj, err := models.TaskHostGet(ginx.UrlParamInt64(c, "id"), ginx.UrlParamStr(c, "host"))
+	obj, err := models.TaskHostGet(UrlParamsInt64(c, "id"), ginx.UrlParamStr(c, "host"))
 	ginx.NewRender(c).Data(obj, err)
 }
 
 func taskHostStdout(c *gin.Context) {
-	id := ginx.UrlParamInt64(c, "id")
+	id := UrlParamsInt64(c, "id")
 	host := ginx.UrlParamStr(c, "host")
 
 	if config.C.Output.ComeFrom == "database" || config.C.Output.ComeFrom == "" {
@@ -101,7 +105,7 @@ func taskHostStdout(c *gin.Context) {
 }
 
 func taskHostStderr(c *gin.Context) {
-	id := ginx.UrlParamInt64(c, "id")
+	id := UrlParamsInt64(c, "id")
 	host := ginx.UrlParamStr(c, "host")
 
 	if config.C.Output.ComeFrom == "database" || config.C.Output.ComeFrom == "" {
@@ -134,7 +138,7 @@ func taskHostStderr(c *gin.Context) {
 }
 
 func taskStdoutTxt(c *gin.Context) {
-	id := ginx.UrlParamInt64(c, "id")
+	id := UrlParamsInt64(c, "id")
 
 	meta, err := models.TaskMetaGet("id = ?", id)
 	if err != nil {
@@ -168,7 +172,7 @@ func taskStdoutTxt(c *gin.Context) {
 }
 
 func taskStderrTxt(c *gin.Context) {
-	id := ginx.UrlParamInt64(c, "id")
+	id := UrlParamsInt64(c, "id")
 
 	meta, err := models.TaskMetaGet("id = ?", id)
 	if err != nil {
@@ -212,7 +216,7 @@ type TaskStderrData struct {
 }
 
 func taskStdoutJSON(c *gin.Context) {
-	task := TaskMeta(ginx.UrlParamInt64(c, "id"))
+	task := TaskMeta(UrlParamsInt64(c, "id"))
 
 	host := ginx.QueryStr(c, "host", "")
 
@@ -255,7 +259,7 @@ func taskStdoutJSON(c *gin.Context) {
 }
 
 func taskStderrJSON(c *gin.Context) {
-	task := TaskMeta(ginx.UrlParamInt64(c, "id"))
+	task := TaskMeta(UrlParamsInt64(c, "id"))
 
 	host := ginx.QueryStr(c, "host", "")
 
@@ -298,18 +302,19 @@ func taskStderrJSON(c *gin.Context) {
 }
 
 type taskForm struct {
-	Title     string   `json:"title" binding:"required"`
-	Account   string   `json:"account" binding:"required"`
-	Batch     int      `json:"batch"`
-	Tolerance int      `json:"tolerance"`
-	Timeout   int      `json:"timeout"`
-	Pause     string   `json:"pause"`
-	Script    string   `json:"script" binding:"required"`
-	Args      string   `json:"args"`
-	Stdin     string   `json:"stdin"`
-	Action    string   `json:"action" binding:"required"`
-	Creator   string   `json:"creator" binding:"required"`
-	Hosts     []string `json:"hosts" binding:"required"`
+	Title          string   `json:"title" binding:"required"`
+	Account        string   `json:"account" binding:"required"`
+	Batch          int      `json:"batch"`
+	Tolerance      int      `json:"tolerance"`
+	Timeout        int      `json:"timeout"`
+	Pause          string   `json:"pause"`
+	Script         string   `json:"script" binding:"required"`
+	Args           string   `json:"args"`
+	Stdin          string   `json:"stdin"`
+	Action         string   `json:"action" binding:"required"`
+	Creator        string   `json:"creator" binding:"required"`
+	Hosts          []string `json:"hosts" binding:"required"`
+	AlertTriggered bool     `json:"alert_triggered"`
 }
 
 func taskAdd(c *gin.Context) {
@@ -321,7 +326,7 @@ func taskAdd(c *gin.Context) {
 		errorx.Bomb(http.StatusBadRequest, "arg(hosts) empty")
 	}
 
-	task := &models.TaskMeta{
+	taskMeta := &models.TaskMeta{
 		Title:     f.Title,
 		Account:   f.Account,
 		Batch:     f.Batch,
@@ -334,20 +339,49 @@ func taskAdd(c *gin.Context) {
 		Creator:   f.Creator,
 	}
 
-	authUser := c.MustGet(gin.AuthUserKey).(string)
+	err := taskMeta.CleanFields()
+	ginx.Dangerous(err)
+	taskMeta.HandleFH(hosts[0])
 
-	err := task.Save(hosts, f.Action)
-	if err != nil {
-		logger.Infof("task_create_fail: authUser=%s title=%s err=%s", authUser, task.Title, err.Error())
+	authUser := c.MustGet(gin.AuthUserKey).(string)
+	// 任务类型分为"告警规则触发"和"n9e center用户下发"两种；
+	// 边缘机房"告警规则触发"的任务不需要规划，并且它可能是失联的，无法使用db资源，所以放入redis缓存中，直接下发给agentd执行
+	if !config.C.IsCenter && f.AlertTriggered {
+		if err := taskMeta.Create(); err != nil {
+			// 当网络不连通时，生成唯一的id，防止边缘机房中不同任务的id相同；
+			// 方法是，redis自增id去防止同一个机房的不同n9e edge生成的id相同；
+			// 但没法防止不同边缘机房生成同样的id，所以，生成id的数据不会上报存入数据库，只用于闭环执行。
+			taskMeta.Id, err = storage.IdGet()
+			ginx.Dangerous(err)
+		}
+		if err == nil {
+			taskHost := models.TaskHost{
+				Id:     taskMeta.Id,
+				Host:   hosts[0],
+				Status: "running",
+			}
+			if err = taskHost.Create(); err != nil {
+				logger.Warningf("task_add_fail: authUser=%s title=%s err=%s", authUser, taskMeta.Title, err.Error())
+			}
+		}
+
+		// 缓存任务元信息和待下发的任务
+		err = taskMeta.Cache(hosts[0])
+		ginx.Dangerous(err)
+
 	} else {
-		logger.Infof("task_create_succ: authUser=%s title=%s", authUser, task.Title)
+		// 如果是中心机房，还是保持之前的逻辑
+		err = taskMeta.Save(hosts, f.Action)
+		ginx.Dangerous(err)
 	}
 
-	ginx.NewRender(c).Data(task.Id, err)
+	logger.Infof("task_add_succ: authUser=%s title=%s", authUser, taskMeta.Title)
+
+	ginx.NewRender(c).Data(taskMeta.Id, err)
 }
 
 func taskGet(c *gin.Context) {
-	meta := TaskMeta(ginx.UrlParamInt64(c, "id"))
+	meta := TaskMeta(UrlParamsInt64(c, "id"))
 
 	hosts, err := meta.Hosts()
 	errorx.Dangerous(err)
@@ -432,7 +466,7 @@ type actionForm struct {
 }
 
 func taskAction(c *gin.Context) {
-	meta := TaskMeta(ginx.UrlParamInt64(c, "id"))
+	meta := TaskMeta(UrlParamsInt64(c, "id"))
 
 	var f actionForm
 	ginx.BindJSON(c, &f)
@@ -449,7 +483,7 @@ func taskAction(c *gin.Context) {
 
 func taskHostAction(c *gin.Context) {
 	host := ginx.UrlParamStr(c, "host")
-	meta := TaskMeta(ginx.UrlParamInt64(c, "id"))
+	meta := TaskMeta(UrlParamsInt64(c, "id"))
 
 	noopWhenDone(meta.Id)
 
@@ -484,6 +518,94 @@ func noopWhenDone(id int64) {
 	errorx.Dangerous(err)
 
 	if action == nil {
-		errorx.Bomb(200, "task already finished, no more action can do")
+		errorx.Bomb(200, "task already finished, no more taskAction can do")
 	}
+}
+
+type sqlCondForm struct {
+	Table string
+	Where string
+	Args  []interface{}
+}
+
+func tableRecordListGet(c *gin.Context) {
+	var f sqlCondForm
+	ginx.BindJSON(c, &f)
+	switch f.Table {
+	case models.TaskHostDoing{}.TableName():
+		lst, err := models.TableRecordGets[[]models.TaskHostDoing](f.Table, f.Where, f.Args)
+		ginx.NewRender(c).Data(lst, err)
+	case models.TaskMeta{}.TableName():
+		lst, err := models.TableRecordGets[[]models.TaskMeta](f.Table, f.Where, f.Args)
+		ginx.NewRender(c).Data(lst, err)
+	default:
+		ginx.Bomb(http.StatusBadRequest, "table[%v] not support", f.Table)
+	}
+}
+
+func tableRecordCount(c *gin.Context) {
+	var f sqlCondForm
+	ginx.BindJSON(c, &f)
+	ginx.NewRender(c).Data(models.TableRecordCount(f.Table, f.Where, f.Args))
+}
+
+type markDoneForm struct {
+	Id     int64
+	Clock  int64
+	Host   string
+	Status string
+	Stdout string
+	Stderr string
+}
+
+func markDone(c *gin.Context) {
+	var f markDoneForm
+	ginx.BindJSON(c, &f)
+	ginx.NewRender(c).Message(models.MarkDoneStatus(f.Id, f.Clock, f.Host, f.Status, f.Stdout, f.Stderr))
+}
+
+func taskMetaAdd(c *gin.Context) {
+	var f models.TaskMeta
+	ginx.BindJSON(c, &f)
+	err := f.Create()
+	ginx.NewRender(c).Data(f.Id, err)
+}
+
+func taskHostAdd(c *gin.Context) {
+	var f models.TaskHost
+	ginx.BindJSON(c, &f)
+	ginx.NewRender(c).Message(f.Upsert())
+}
+
+func taskHostUpsert(c *gin.Context) {
+	var f []models.TaskHost
+	ginx.BindJSON(c, &f)
+	ginx.NewRender(c).Data(models.TaskHostUpserts(f))
+}
+
+func UrlParamsInt64(c *gin.Context, field string) int64 {
+
+	var params []gin.Param
+	for _, p := range c.Params {
+		if p.Key == "id" {
+			params = append(params, p)
+		}
+	}
+
+	var strval string
+	if len(params) == 1 {
+		strval = ginx.UrlParamStr(c, field)
+	} else if len(params) == 2 {
+		strval = params[1].Value
+	} else {
+		logger.Warningf("url param[%+v] not ok", params)
+		errorx.Bomb(http.StatusBadRequest, "url param[%s] is blank", field)
+	}
+
+	intval, err := strconv.ParseInt(strval, 10, 64)
+	if err != nil {
+		errorx.Bomb(http.StatusBadRequest, "cannot convert %s to int64", strval)
+	}
+
+	return intval
 }
