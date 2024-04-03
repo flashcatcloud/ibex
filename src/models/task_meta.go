@@ -27,7 +27,7 @@ type TaskMeta struct {
 	Args      string    `gorm:"column:args;size:512;not null;default:''"`
 	Stdin     string    `gorm:"column:stdin;size:1024;not null;default:''"`
 	Creator   string    `gorm:"column:creator;size:64;not null;default:'';index"`
-	Created   time.Time `gorm:"column:created;not null;default:CURRENT_TIMESTAMP;index"`
+	Created   time.Time `gorm:"column:created;not null;default:CURRENT_TIMESTAMP;type:timestamp;index"`
 	Done      bool      `json:"done" gorm:"-"`
 }
 
