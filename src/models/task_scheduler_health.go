@@ -5,8 +5,8 @@ import (
 )
 
 type TaskSchedulerHealth struct {
-	Scheduler string
-	Clock     int64
+	Scheduler string `gorm:"column:scheduler;uniqueIndex;size:128;not null"`
+	Clock     int64  `gorm:"column:clock;not null;index"`
 }
 
 func (TaskSchedulerHealth) TableName() string {

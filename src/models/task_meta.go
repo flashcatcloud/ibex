@@ -16,18 +16,18 @@ import (
 )
 
 type TaskMeta struct {
-	Id        int64     `json:"id" gorm:"primaryKey"`
-	Title     string    `json:"title"`
-	Account   string    `json:"account"`
-	Batch     int       `json:"batch"`
-	Tolerance int       `json:"tolerance"`
-	Timeout   int       `json:"timeout"`
-	Pause     string    `json:"pause"`
-	Script    string    `json:"script"`
-	Args      string    `json:"args"`
-	Stdin     string    `json:"stdin"`
-	Creator   string    `json:"creator"`
-	Created   time.Time `json:"created" gorm:"->"`
+	Id        int64     `gorm:"column:id;primaryKey;autoIncrement"`
+	Title     string    `gorm:"column:title;size:255;not null;default:''"`
+	Account   string    `gorm:"column:account;size:64;not null"`
+	Batch     int       `gorm:"column:batch;not null;default:0"`
+	Tolerance int       `gorm:"column:tolerance;not null;default:0"`
+	Timeout   int       `gorm:"column:timeout;not null;default:0"`
+	Pause     string    `gorm:"column:pause;size:255;not null;default:''"`
+	Script    string    `gorm:"column:script;type:text;not null"`
+	Args      string    `gorm:"column:args;size:512;not null;default:''"`
+	Stdin     string    `gorm:"column:stdin;size:1024;not null;default:''"`
+	Creator   string    `gorm:"column:creator;size:64;not null;default:'';index"`
+	Created   time.Time `gorm:"column:created;not null;default:CURRENT_TIMESTAMP;index"`
 	Done      bool      `json:"done" gorm:"-"`
 }
 

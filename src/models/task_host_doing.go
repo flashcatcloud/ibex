@@ -7,11 +7,11 @@ import (
 )
 
 type TaskHostDoing struct {
-	Id             int64 `gorm:"primaryKey"`
-	Host           string
-	Clock          int64
-	Action         string
-	AlertTriggered bool `gorm:"-"`
+	Id             int64  `gorm:"column:id;index"`
+	Host           string `gorm:"column:host;size:128;not null;index"`
+	Clock          int64  `gorm:"column:clock;not null;default:0"`
+	Action         string `gorm:"column:action;size:16;not null"`
+	AlertTriggered bool   `gorm:"-"`
 }
 
 func (TaskHostDoing) TableName() string {
