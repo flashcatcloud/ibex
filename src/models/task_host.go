@@ -16,7 +16,7 @@ import (
 )
 
 type TaskHost struct {
-	II     int64  `gorm:"column:ii;primaryKey;autoIncrement"`
+	II     int64  `gorm:"column:ii;primaryKey;autoIncrement" json:"-"`
 	Id     int64  `gorm:"column:id;uniqueIndex:idx_id_host;not null"`
 	Host   string `gorm:"column:host;uniqueIndex:idx_id_host;size:128;not null"`
 	Status string `gorm:"column:status;size:32;not null"`
