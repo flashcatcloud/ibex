@@ -17,11 +17,11 @@ import (
 
 type TaskHost struct {
 	II     int64  `gorm:"column:ii;primaryKey;autoIncrement" json:"-"`
-	Id     int64  `gorm:"column:id;uniqueIndex:idx_id_host;not null"`
-	Host   string `gorm:"column:host;uniqueIndex:idx_id_host;size:128;not null"`
-	Status string `gorm:"column:status;size:32;not null"`
-	Stdout string `gorm:"column:stdout;type:text"`
-	Stderr string `gorm:"column:stderr;type:text"`
+	Id     int64  `gorm:"column:id;uniqueIndex:idx_id_host;not null" json:"id"`
+	Host   string `gorm:"column:host;uniqueIndex:idx_id_host;size:128;not null" json:"host"`
+	Status string `gorm:"column:status;size:32;not null" json:"status"`
+	Stdout string `gorm:"column:stdout;type:text" json:"stdout"`
+	Stderr string `gorm:"column:stderr;type:text" json:"stderr"`
 }
 
 func (taskHost *TaskHost) Upsert() error {
