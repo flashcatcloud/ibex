@@ -27,7 +27,7 @@ func (doing *TaskHostDoing) UnmarshalBinary(data []byte) error {
 }
 
 func hostDoingCacheKey(id int64, host string) string {
-	return fmt.Sprintf("host:doing:%s:%d", host, id)
+	return fmt.Sprintf("%s:%d", host, id)
 }
 
 var (

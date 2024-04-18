@@ -34,11 +34,8 @@ func cacheHostDoing() error {
 	}
 
 	ctx := context.Background()
-	keys, err := models.CacheKeyGets(ctx, "host:doing:*")
-	if err != nil {
-		logger.Errorf("models.CacheKeyGets fail: %v", err)
-	}
-	doingsFromRedis, err := models.CacheRecordGets[models.TaskHostDoing](ctx, keys)
+
+	doingsFromRedis, err := models.CacheRecordGets[models.TaskHostDoing](ctx)
 	if err != nil {
 		logger.Errorf("models.CacheRecordGets fail: %v", err)
 	}
