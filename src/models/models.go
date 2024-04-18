@@ -67,22 +67,14 @@ func TableRecordCount(table, where string, args ...interface{}) (int64, error) {
 	})
 }
 
-func CacheKeyGets(ctx context.Context, prefix string) ([]string, error) {
-	iter := storage.Cache.Scan(ctx, 0, prefix, 0).Iterator()
-	keys := make([]string, 0)
-	for iter.Next(ctx) {
-		keys = append(keys, iter.Val())
-	}
+var IBEX_HOST_DOING = "ibex-host-doing"
 
-	return keys, iter.Err()
-}
-
-func CacheRecordGets[T any](ctx context.Context, keys []string) ([]T, error) {
-	lst := make([]T, 0, len(keys))
-	values := storage.CacheMGet(ctx, keys)
+func CacheRecordGets[T any](ctx context.Context) ([]T, error) {
+	lst := make([]T, 0)
+	values, _ := storage.Cache.HVals(ctx, IBEX_HOST_DOING).Result()
 	for _, val := range values {
 		t := new(T)
-		if err := json.Unmarshal(val, t); err != nil {
+		if err := json.Unmarshal([]byte(val), t); err != nil {
 			return nil, err
 		}
 		lst = append(lst, *t)

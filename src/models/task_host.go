@@ -133,7 +133,7 @@ func MarkDoneStatus(id, clock int64, host, status, stdout, stderr string, edgeAl
 }
 
 func CacheMarkDone(ctx context.Context, taskHost TaskHost) error {
-	if err := storage.Cache.Del(ctx, hostDoingCacheKey(taskHost.Id, taskHost.Host)).Err(); err != nil {
+	if err := storage.Cache.HDel(ctx, IBEX_HOST_DOING, hostDoingCacheKey(taskHost.Id, taskHost.Host)).Err(); err != nil {
 		return err
 	}
 	TaskHostCachePush(taskHost)
@@ -227,7 +227,7 @@ func ReportCacheResult() error {
 		// id大于redis初始id，说明是edge与center失联时，本地告警规则触发的自愈脚本生成的id
 		// 为了防止不同边缘机房生成的脚本任务id相同，不上报结果至数据库
 		if th.Id >= storage.IDINITIAL {
-			logger.Infof("task[%s] host[%s] done, result:[%v]", th.Id, th.Host, th)
+			logger.Infof("task[%d] host[%s] done, result:[%v]", th.Id, th.Host, th)
 		} else {
 			reports = append(reports, th)
 		}

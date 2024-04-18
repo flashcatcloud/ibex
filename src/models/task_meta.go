@@ -162,7 +162,7 @@ func (taskMeta *TaskMeta) Cache(host string) error {
 
 	tx := storage.Cache.TxPipeline()
 	tx.Set(ctx, taskMetaCacheKey(taskMeta.Id), taskMeta, storage.DEFAULT)
-	tx.Set(ctx, hostDoingCacheKey(taskMeta.Id, host), &TaskHostDoing{
+	tx.HSet(ctx, IBEX_HOST_DOING, hostDoingCacheKey(taskMeta.Id, host), &TaskHostDoing{
 		Id:     taskMeta.Id,
 		Host:   host,
 		Clock:  time.Now().Unix(),
