@@ -115,7 +115,7 @@ func (m *TaskMeta) CleanFields() error {
 	}
 
 	if m.Timeout > 3600*24*5 {
-		return fmt.Errorf("arg(timeout) longer than five day")
+		return fmt.Errorf("arg(timeout) longer than five days")
 	}
 
 	if m.Timeout == 0 {
