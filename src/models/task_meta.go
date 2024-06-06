@@ -167,7 +167,7 @@ func (taskMeta *TaskMeta) Cache(host string) error {
 		Host:   host,
 		Clock:  time.Now().Unix(),
 		Action: "start",
-	}, storage.DEFAULT)
+	})
 
 	_, err := tx.Exec(ctx)
 

@@ -1,7 +1,6 @@
 package models
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
@@ -20,12 +19,13 @@ func (TaskAction) TableName() string {
 
 func TaskActionGet(where string, args ...interface{}) (*TaskAction, error) {
 	var obj TaskAction
-	ret := DB().Where(where, args...).First(&obj)
+	ret := DB().Where(where, args...).Find(&obj)
 	if ret.Error != nil {
-		if errors.Is(ret.Error, gorm.ErrRecordNotFound) {
-			return nil, nil
-		}
 		return nil, ret.Error
+	}
+
+	if ret.RowsAffected == 0 {
+		return nil, nil
 	}
 
 	return &obj, nil
