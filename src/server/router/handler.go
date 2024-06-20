@@ -87,6 +87,7 @@ func taskHostStdout(c *gin.Context) {
 	}
 
 	url := fmt.Sprintf("http://%s:%d/output/%d/stdout.json", host, config.C.Output.AgtdPort, id)
+	fmt.Println("ibex", url)
 	client := &http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
