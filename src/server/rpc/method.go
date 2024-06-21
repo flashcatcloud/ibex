@@ -36,7 +36,6 @@ func (*Server) GetTaskMeta(id int64, resp *types.TaskMetaResponse) error {
 
 func (*Server) Report(req types.ReportRequest, resp *types.ReportResponse) error {
 	if req.ReportTasks != nil && len(req.ReportTasks) > 0 {
-		fmt.Println("task req", req)
 		err := handleDoneTask(req)
 		if err != nil {
 			resp.Message = err.Error()
@@ -64,8 +63,8 @@ func handleDoneTask(req types.ReportRequest) error {
 	for i := 0; i < count; i++ {
 		t := req.ReportTasks[i]
 
-		if t.Status == "success" {
-			fmt.Println("success", t)
+		if t.Status == "success" || t.Status == "running" {
+			fmt.Println(t.Status)
 			exist, isEdgeAlertTriggered := models.CheckExistAndEdgeAlertTriggered(req.Ident, t.Id)
 			// ibex agent可能会重复上报结果，如果任务已经不在task_host_doing缓存中了，说明该任务已经MarkDone了，不需要再处理
 			if !exist {
