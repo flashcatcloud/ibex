@@ -63,7 +63,15 @@ func handleDoneTask(req types.ReportRequest) error {
 	for i := 0; i < count; i++ {
 		t := req.ReportTasks[i]
 
-		if t.Status == "success" || t.Status == "running" {
+		if t.Status == "running" {
+			err := models.RealTimeUpdateOutput(t.Id, req.Ident, t.Status, t.Stdout, t.Stderr)
+			if err != nil {
+				logger.Errorf("cannot realtime update output, id:%d, hostname:%s, clock:%d, status:%s, err: %v", t.Id, req.Ident, t.Clock, t.Status, err)
+				return err
+			}
+		}
+
+		if t.Status == "success" {
 			fmt.Println(t.Status)
 			exist, isEdgeAlertTriggered := models.CheckExistAndEdgeAlertTriggered(req.Ident, t.Id)
 			// ibex agent可能会重复上报结果，如果任务已经不在task_host_doing缓存中了，说明该任务已经MarkDone了，不需要再处理

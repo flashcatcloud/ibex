@@ -134,6 +134,21 @@ func MarkDoneStatus(id, clock int64, host, status, stdout, stderr string, edgeAl
 	})
 }
 
+func RealTimeUpdateOutput(id int64, host, status, stdout, stderr string) error {
+	return DB().Transaction(func(tx *gorm.DB) error {
+		err := tx.Table(tht(id)).Where("id=? and host=?", id, host).Updates(map[string]interface{}{
+			"status": status,
+			"stdout": stdout,
+			"stderr": stderr,
+		}).Error
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
+
 func CacheMarkDone(ctx context.Context, taskHost TaskHost) error {
 	if err := storage.Cache.HDel(ctx, IBEX_HOST_DOING, hostDoingCacheKey(taskHost.Id, taskHost.Host)).Err(); err != nil {
 		return err
