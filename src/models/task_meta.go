@@ -196,12 +196,7 @@ func (taskMeta *TaskMeta) Save(hosts []string, action string) error {
 				continue
 			}
 
-			err := tx.Table(tht(id)).Create(map[string]interface{}{
-				"id":     id,
-				"host":   host,
-				"status": "waiting",
-			}).Error
-
+			err := tx.Exec("INSERT INTO "+tht(id)+" (id, host, status) VALUES (?, ?, ?)", id, host, "waiting").Error
 			if err != nil {
 				return err
 			}
