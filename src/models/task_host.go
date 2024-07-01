@@ -97,8 +97,6 @@ func MarkDoneStatus(id, clock int64, host, status, stdout, stderr string, edgeAl
 		return err
 	}
 
-	fmt.Println("count", count)
-
 	if count == 0 {
 		// 如果是timeout了，后来任务执行完成之后，结果又上来了，stdout和stderr最好还是存库，让用户看到
 		count, err = TableRecordCount(tht(id), "id=? and host=? and status=?", id, host, "timeout")
@@ -137,7 +135,7 @@ func MarkDoneStatus(id, clock int64, host, status, stdout, stderr string, edgeAl
 func RealTimeUpdateOutput(id int64, host, status, stdout, stderr string) error {
 	return DB().Transaction(func(tx *gorm.DB) error {
 		err := tx.Table(tht(id)).Where("id=? and host=?", id, host).Updates(map[string]interface{}{
-			"status": status,
+			//"status": status,
 			"stdout": stdout,
 			"stderr": stderr,
 		}).Error
