@@ -103,7 +103,7 @@ func MarkDoneStatus(id, clock int64, host, status, stdout, stderr string, edgeAl
 		if err != nil {
 			return err
 		}
-		fmt.Println("count down", status, stdout)
+
 		if count == 1 {
 			return DB().Table(tht(id)).Where("id=? and host=?", id, host).Updates(map[string]interface{}{
 				"status": status,
@@ -132,10 +132,9 @@ func MarkDoneStatus(id, clock int64, host, status, stdout, stderr string, edgeAl
 	})
 }
 
-func RealTimeUpdateOutput(id int64, host, status, stdout, stderr string) error {
+func RealTimeUpdateOutput(id int64, host, stdout, stderr string) error {
 	return DB().Transaction(func(tx *gorm.DB) error {
 		err := tx.Table(tht(id)).Where("id=? and host=?", id, host).Updates(map[string]interface{}{
-			//"status": status,
 			"stdout": stdout,
 			"stderr": stderr,
 		}).Error

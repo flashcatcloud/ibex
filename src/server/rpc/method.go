@@ -64,7 +64,7 @@ func handleDoneTask(req types.ReportRequest) error {
 		t := req.ReportTasks[i]
 
 		if t.Status == "running" {
-			err := models.RealTimeUpdateOutput(t.Id, req.Ident, t.Status, t.Stdout, t.Stderr)
+			err := models.RealTimeUpdateOutput(t.Id, req.Ident, t.Stdout, t.Stderr)
 			if err != nil {
 				logger.Errorf("cannot realtime update output, id:%d, hostname:%s, clock:%d, status:%s, err: %v", t.Id, req.Ident, t.Clock, t.Status, err)
 				return err
