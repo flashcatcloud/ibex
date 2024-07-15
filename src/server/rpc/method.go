@@ -3,6 +3,7 @@ package rpc
 import (
 	"fmt"
 	"github.com/toolkits/pkg/logger"
+	"os"
 
 	"github.com/flashcatcloud/ibex/src/models"
 	"github.com/flashcatcloud/ibex/src/types"
@@ -63,15 +64,13 @@ func handleDoneTask(req types.ReportRequest) error {
 	for i := 0; i < count; i++ {
 		t := req.ReportTasks[i]
 
-		if t.Status == "running" {
+		if os.Getenv("CONTINUOUS_OUTPUT") == "1" && t.Status == "running" {
 			err := models.RealTimeUpdateOutput(t.Id, req.Ident, t.Stdout, t.Stderr)
 			if err != nil {
 				logger.Errorf("cannot realtime update output, id:%d, hostname:%s, clock:%d, status:%s, err: %v", t.Id, req.Ident, t.Clock, t.Status, err)
 				return err
 			}
-		}
-
-		if t.Status == "success" || t.Status == "failed" {
+		} else {
 			exist, isEdgeAlertTriggered := models.CheckExistAndEdgeAlertTriggered(req.Ident, t.Id)
 			// ibex agent可能会重复上报结果，如果任务已经不在task_host_doing缓存中了，说明该任务已经MarkDone了，不需要再处理
 			if !exist {
@@ -84,6 +83,7 @@ func handleDoneTask(req types.ReportRequest) error {
 				return err
 			}
 		}
+
 	}
 
 	return nil
