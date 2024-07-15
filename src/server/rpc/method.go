@@ -61,10 +61,11 @@ func (*Server) Report(req types.ReportRequest, resp *types.ReportResponse) error
 
 func handleDoneTask(req types.ReportRequest) error {
 	count := len(req.ReportTasks)
+	val, ok := os.LookupEnv("CONTINUOUS_OUTPUT")
 	for i := 0; i < count; i++ {
 		t := req.ReportTasks[i]
 
-		if os.Getenv("CONTINUOUS_OUTPUT") == "1" && t.Status == "running" {
+		if ok && val == "1" && t.Status == "running" {
 			err := models.RealTimeUpdateOutput(t.Id, req.Ident, t.Stdout, t.Stderr)
 			if err != nil {
 				logger.Errorf("cannot realtime update output, id:%d, hostname:%s, clock:%d, status:%s, err: %v", t.Id, req.Ident, t.Clock, t.Status, err)
