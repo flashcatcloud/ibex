@@ -2,8 +2,9 @@ package rpc
 
 import (
 	"fmt"
-	"github.com/toolkits/pkg/logger"
 	"os"
+	
+	"github.com/toolkits/pkg/logger"
 
 	"github.com/flashcatcloud/ibex/src/models"
 	"github.com/flashcatcloud/ibex/src/types"
@@ -67,7 +68,7 @@ func handleDoneTask(req types.ReportRequest) error {
 		if ok && val == "1" && t.Status == "running" {
 			err := models.RealTimeUpdateOutput(t.Id, req.Ident, t.Stdout, t.Stderr)
 			if err != nil {
-				logger.Errorf("cannot realtime update output, id:%d, hostname:%s, clock:%d, status:%s, err: %v", t.Id, req.Ident, t.Clock, t.Status, err)
+				logger.Errorf("cannot update output, id:%d, hostname:%s, clock:%d, status:%s, err: %v", t.Id, req.Ident, t.Clock, t.Status, err)
 				return err
 			}
 		} else {
