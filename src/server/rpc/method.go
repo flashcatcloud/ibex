@@ -64,7 +64,6 @@ func handleDoneTask(req types.ReportRequest) error {
 	val, ok := os.LookupEnv("CONTINUOUS_OUTPUT")
 	for i := 0; i < count; i++ {
 		t := req.ReportTasks[i]
-		fmt.Println(ok, val, t.Status)
 		if ok && val == "1" && t.Status == "running" {
 			err := models.RealTimeUpdateOutput(t.Id, req.Ident, t.Stdout, t.Stderr)
 			if err != nil {
