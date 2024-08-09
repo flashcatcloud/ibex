@@ -98,7 +98,7 @@ type Config struct {
 	HTTP      httpx.Config
 	BasicAuth gin.Accounts
 	DB        ormx.DBConfig
-	Cache     storage.RedisConfig
+	Redis     storage.RedisConfig
 }
 
 type RPC struct {

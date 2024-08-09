@@ -105,7 +105,7 @@ func (s Server) initialize() (func(), error) {
 			return fns.Ret(), err
 		}
 	}
-	if err = storage.InitRedis(config.C.Cache); err != nil {
+	if err = storage.InitRedis(config.C.Redis); err != nil {
 		return fns.Ret(), err
 	}
 
