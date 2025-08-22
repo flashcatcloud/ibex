@@ -73,11 +73,15 @@ func handleDoneTask(req types.ReportRequest) error {
 			}
 		} else {
 			if t.Status == "success" || t.Status == "failed" {
-				exist, isEdgeAlertTriggered := models.CheckExistAndEdgeAlertTriggered(req.Ident, t.Id)
+				_, isEdgeAlertTriggered := models.CheckExistAndEdgeAlertTriggered(req.Ident, t.Id)
 				// ibex agent可能会重复上报结果，如果任务已经不在task_host_doing缓存中了，说明该任务已经MarkDone了，不需要再处理
-				if !exist {
-					continue
-				}
+				// if !exist {
+				// 	continue
+				// }
+				// update:
+				// 之前的代码的问题：如果脚本超时了，服务端会结束任务，客户端最终脚本执行的 stdout 和 stderr 虽然最终也上报了但是被服务端 continue 丢弃了
+				// 改造之后，可以接收超时脚本的 stdout 和 stderr。
+				// 但是：如果 edge 和中心之间网络断了，就会写失败
 
 				err := models.MarkDoneStatus(t.Id, t.Clock, req.Ident, t.Status, t.Stdout, t.Stderr, isEdgeAlertTriggered)
 				if err != nil {
