@@ -292,12 +292,22 @@ func (m *TaskMeta) HostStrs() ([]string, error) {
 }
 
 func (m *TaskMeta) Stdouts() ([]TaskHost, error) {
+	if !config.C.IsCenter {
+		path := fmt.Sprintf("/ibex/v1/task/%d/stdout", m.Id)
+		return poster.GetByUrlsWithResp[[]TaskHost](config.C.CenterApi, path)
+	}
+
 	var ret []TaskHost
 	err := DB().Table(tht(m.Id)).Where("id=?", m.Id).Select("id", "host", "status", "stdout").Order("ii").Find(&ret).Error
 	return ret, err
 }
 
 func (m *TaskMeta) Stderrs() ([]TaskHost, error) {
+	if !config.C.IsCenter {
+		path := fmt.Sprintf("/ibex/v1/task/%d/stderr", m.Id)
+		return poster.GetByUrlsWithResp[[]TaskHost](config.C.CenterApi, path)
+	}
+
 	var ret []TaskHost
 	err := DB().Table(tht(m.Id)).Where("id=?", m.Id).Select("id", "host", "status", "stderr").Order("ii").Find(&ret).Error
 	return ret, err

@@ -28,3 +28,9 @@ func PostByUrlsWithResp[T any](centerApi conf.CenterApi, path string, v interfac
 
 	return poster.PostByUrlsWithResp[T](n9eCtx, path, v)
 }
+
+func GetByUrlsWithResp[T any](centerApi conf.CenterApi, path string) (t T, err error) {
+	n9eCtx := NewN9eCtx(centerApi)
+
+	return poster.GetByUrls[T](n9eCtx, path)
+}
