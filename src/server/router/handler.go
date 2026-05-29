@@ -381,7 +381,8 @@ func taskAdd(c *gin.Context) {
 }
 
 func taskGet(c *gin.Context) {
-	meta := TaskMeta(UrlParamsInt64(c, "id"))
+	id := UrlParamsInt64(c, "id")
+	meta := TaskMeta(id)
 
 	hosts, err := meta.Hosts()
 	errorx.Dangerous(err)
@@ -396,10 +397,17 @@ func taskGet(c *gin.Context) {
 		meta.Done = true
 	}
 
+	// 反查 group_id 透传给前端；查不到/查失败都不影响主流程，置 0 即可。
+	gid, err := models.TaskRecordGroupId(id)
+	if err != nil {
+		logger.Warningf("task_record lookup failed: id=%d err=%s", id, err.Error())
+	}
+
 	ginx.NewRender(c).Data(gin.H{
-		"meta":   meta,
-		"hosts":  hosts,
-		"action": actionStr,
+		"meta":     meta,
+		"hosts":    hosts,
+		"action":   actionStr,
+		"group_id": gid,
 	}, nil)
 }
 
