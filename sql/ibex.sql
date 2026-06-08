@@ -17,6 +17,7 @@ CREATE TABLE `task_meta`
     `args`        varchar(512)    not null default '',
     `stdin`       varchar(1024)   not null default '',
     `creator`     varchar(64)     not null default '',
+    `system_caller` varchar(64)   not null default '',
     `created`     timestamp       not null default CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     KEY (`creator`),

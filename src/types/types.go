@@ -1,11 +1,12 @@
 package types
 
 type TaskMetaResponse struct {
-	Message string
-	Script  string
-	Args    string
-	Account string
-	Stdin   string
+	Message      string
+	Script       string
+	Args         string
+	Account      string
+	Stdin        string
+	SystemCaller string
 }
 
 type ReportTask struct {

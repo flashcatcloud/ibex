@@ -3,7 +3,7 @@ package rpc
 import (
 	"fmt"
 	"os"
-	
+
 	"github.com/toolkits/pkg/logger"
 
 	"github.com/flashcatcloud/ibex/src/models"
@@ -32,6 +32,7 @@ func (*Server) GetTaskMeta(id int64, resp *types.TaskMetaResponse) error {
 	resp.Args = meta.Args
 	resp.Account = meta.Account
 	resp.Stdin = meta.Stdin
+	resp.SystemCaller = meta.SystemCaller
 
 	return nil
 }

@@ -29,6 +29,8 @@ type TaskMeta struct {
 	Creator   string    `gorm:"column:creator;size:64;not null;default:'';index" json:"creator"`
 	Created   time.Time `gorm:"column:created;not null;default:CURRENT_TIMESTAMP;type:timestamp;index" json:"created"`
 	Done      bool      `json:"done" gorm:"-"`
+
+	SystemCaller string `gorm:"column:system_caller;size:64;not null;default:''" json:"system_caller"`
 }
 
 func (TaskMeta) TableName() string {
