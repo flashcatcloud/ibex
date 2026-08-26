@@ -3,6 +3,7 @@ package models
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -25,10 +26,63 @@ type TaskHost struct {
 }
 
 func (taskHost *TaskHost) Upsert() error {
-	return DB().Table(tht(taskHost.Id)).Clauses(clause.OnConflict{
+	db := DB()
+
+	// 达梦的 gorm dialector 只在主键列全部出现在插入列里时才把 OnConflict 翻译成
+	// MERGE INTO。TaskHost 的主键是自增的 ii，插入时为零值会被 gorm 省略，于是退化成
+	// 裸 INSERT 撞上 (id, host) 唯一索引。边缘机房的告警自愈任务正是靠这个方法回写
+	// 执行结果，撞了就写不回去。
+	if db.Dialector.Name() == "dm" {
+		return taskHost.upsertCompat(db)
+	}
+
+	return db.Table(tht(taskHost.Id)).Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "id"}, {Name: "host"}},
 		DoUpdates: clause.AssignmentColumns([]string{"status", "stdout", "stderr"}),
 	}).Create(taskHost).Error
+}
+
+// upsertCompat 先查后写。并发下两个调用可能都查到"不存在"，所以插入撞唯一键时退回更新。
+func (taskHost *TaskHost) upsertCompat(db *gorm.DB) error {
+	tbl := tht(taskHost.Id)
+
+	update := func() error {
+		return db.Table(tbl).Where("id = ? and host = ?", taskHost.Id, taskHost.Host).
+			Updates(map[string]interface{}{
+				"status": taskHost.Status,
+				"stdout": taskHost.Stdout,
+				"stderr": taskHost.Stderr,
+			}).Error
+	}
+
+	var cnt int64
+	if err := db.Table(tbl).Where("id = ? and host = ?", taskHost.Id, taskHost.Host).
+		Count(&cnt).Error; err != nil {
+		return err
+	}
+	if cnt > 0 {
+		return update()
+	}
+
+	if err := db.Table(tbl).Create(taskHost).Error; err != nil {
+		if isDuplicatedKey(err) {
+			return update()
+		}
+		return err
+	}
+	return nil
+}
+
+// isDuplicatedKey 判断唯一键冲突。各方言的报错文本不同，只能按串匹配。
+func isDuplicatedKey(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := err.Error()
+	return strings.Contains(msg, "Duplicate entry") || // MySQL 1062
+		strings.Contains(msg, "duplicate key value") || // PostgreSQL 23505
+		strings.Contains(msg, "UNIQUE constraint failed") || // SQLite
+		strings.Contains(msg, "-6602") // 达梦：违反唯一性约束
 }
 
 func (taskHost *TaskHost) Create() error {
