@@ -8,7 +8,10 @@ import (
 )
 
 type TaskAction struct {
-	Id     int64  `gorm:"column:id;primaryKey"`
+	// id 就是 task id，由调用方赋值，不是自增列。不标 autoIncrement:false 的话 gorm 会
+	// 按自增处理，达梦驱动插入前先发 SET IDENTITY_INSERT，而从 MySQL 迁移来的表上没有
+	// 自增列，直接报 -2717 表[task_action]不存在IDENTITY列。
+	Id     int64  `gorm:"column:id;primaryKey;autoIncrement:false"`
 	Action string `gorm:"column:action;size:32;not null"`
 	Clock  int64  `gorm:"column:clock;not null;default:0"`
 }

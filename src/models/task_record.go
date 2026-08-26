@@ -8,7 +8,8 @@ import (
 
 // TaskRecord 对应 nightingale center 维护的 task_record 表，只读反查 group_id，不参与写入/迁移。
 type TaskRecord struct {
-	Id      int64 `gorm:"column:id;primaryKey"`
+	// id 就是 task id，不是自增列，原因同 TaskAction.Id。
+	Id      int64 `gorm:"column:id;primaryKey;autoIncrement:false"`
 	GroupId int64 `gorm:"column:group_id"`
 }
 

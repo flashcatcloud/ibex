@@ -3,7 +3,8 @@ package models
 import "gorm.io/gorm"
 
 type TaskScheduler struct {
-	Id        int64  `gorm:"column:id;primaryKey"`
+	// id 就是 task id，不是自增列，原因同 TaskAction.Id。
+	Id        int64  `gorm:"column:id;primaryKey;autoIncrement:false"`
 	Scheduler string `gorm:"column:scheduler;size:128;not null;default:''"`
 }
 

@@ -7,7 +7,9 @@ import (
 )
 
 type TaskHostDoing struct {
-	Id             int64  `gorm:"column:id;index"`
+	// 没写 primaryKey，但 gorm 会把名为 id 的整型列自动认作主键并按自增处理，
+	// 所以同样要显式关掉，原因见 TaskAction.Id。
+	Id             int64  `gorm:"column:id;index;autoIncrement:false"`
 	Host           string `gorm:"column:host;size:128;not null;index"`
 	Clock          int64  `gorm:"column:clock;not null;default:0"`
 	Action         string `gorm:"column:action;size:16;not null"`
