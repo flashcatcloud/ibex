@@ -28,9 +28,13 @@ func loopCacheHostDoing() {
 }
 
 func cacheHostDoing() error {
+	// 任何一路取数失败都直接返回，保留上一轮的缓存。
+	// 用残缺的数据覆盖缓存会让 agent 静默地收不到任务：Report 照常返回，只是 AssignTasks
+	// 空了，排查时唯一的线索只有这里的一行日志。宁可短暂用旧数据，也不要下发一个空集合。
 	doingsFromDb, err := models.TableRecordGets[[]models.TaskHostDoing](models.TaskHostDoing{}.TableName(), "")
 	if err != nil {
 		logger.Errorf("models.TableRecordGets fail: %v", err)
+		return err
 	}
 
 	ctx := context.Background()
@@ -38,6 +42,7 @@ func cacheHostDoing() error {
 	doingsFromRedis, err := models.CacheRecordGets[models.TaskHostDoing](ctx)
 	if err != nil {
 		logger.Errorf("models.CacheRecordGets fail: %v", err)
+		return err
 	}
 
 	set := make(map[string][]models.TaskHostDoing)
