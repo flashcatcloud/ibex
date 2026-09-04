@@ -27,12 +27,15 @@ func CacheMGet(ctx context.Context, keys []string) [][]byte {
 	return storage.MGet(ctx, Cache, keys)
 }
 
-const IDINITIAL = 1 << 32
+const (
+	IDINITIAL = 1 << 32
+	idKey     = "n9e_ibex_id"
+)
 
 func IdInit() error {
-	return Cache.Set(context.Background(), "id", IDINITIAL, 0).Err()
+	return Cache.Set(context.Background(), idKey, IDINITIAL, 0).Err()
 }
 
 func IdGet() (int64, error) {
-	return Cache.Incr(context.Background(), "id").Result()
+	return Cache.Incr(context.Background(), idKey).Result()
 }
