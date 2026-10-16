@@ -10,11 +10,12 @@ type TaskMetaResponse struct {
 }
 
 type ReportTask struct {
-	Id     int64
-	Clock  int64
-	Status string
-	Stdout string
-	Stderr string
+	ProfilingTaskID string
+	Id              int64
+	Clock           int64
+	Status          string
+	Stdout          string
+	Stderr          string
 }
 
 type ReportRequest struct {
@@ -28,7 +29,14 @@ type AssignTask struct {
 	Action string
 }
 
+type ProfilingReceipt struct {
+	Id              int64
+	Clock           int64
+	ProfilingTaskID string
+}
+
 type ReportResponse struct {
-	Message     string
-	AssignTasks []AssignTask
+	ProfilingReceipts []ProfilingReceipt
+	Message           string
+	AssignTasks       []AssignTask
 }

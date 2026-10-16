@@ -57,6 +57,20 @@ func (*Server) Report(req types.ReportRequest, resp *types.ReportResponse) error
 		})
 	}
 	resp.AssignTasks = tasks
+	// Optional receipts only for explicitly opted-in profiling results.
+	for _, reported := range req.ReportTasks {
+		if reported.ProfilingTaskID == "" {
+			continue
+		}
+		confirmed, err := models.ProfilingResultStored(req.Ident, reported)
+		if err != nil {
+			logger.Warningf("profiling result confirmation %d: %v", reported.Id, err)
+			continue
+		}
+		if confirmed {
+			resp.ProfilingReceipts = append(resp.ProfilingReceipts, types.ProfilingReceipt{Id: reported.Id, Clock: reported.Clock, ProfilingTaskID: reported.ProfilingTaskID})
+		}
+	}
 
 	return nil
 }
