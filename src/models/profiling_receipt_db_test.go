@@ -14,7 +14,7 @@ import (
 
 func TestProfilingReceiptPersistenceChecks(t *testing.T) {
 	const parent = "cpt-123e4567-e89b-12d3-a456-426614174000"
-	for _, scenario := range []string{"stored", "missing-meta", "ordinary", "still-assigned", "missing-result", "mismatch", "db-error", "edge"} {
+	for _, scenario := range []string{"stored", "killed", "missing-meta", "ordinary", "still-assigned", "missing-result", "mismatch", "db-error", "edge"} {
 		t.Run(scenario, func(t *testing.T) {
 			sql, mock, err := sqlmock.New()
 			if err != nil {
@@ -30,6 +30,9 @@ func TestProfilingReceiptPersistenceChecks(t *testing.T) {
 			config.C.IsCenter = scenario != "edge"
 			defer func() { storage.DB = oldDB; config.C.IsCenter = oldCenter }()
 			r := types.ReportTask{Id: 42, Clock: 100, ProfilingTaskID: parent, Status: "success", Stdout: "full"}
+			if scenario == "killed" {
+				r.Status = "killed"
+			}
 			if scenario != "edge" {
 				q := mock.ExpectQuery("SELECT .*task_meta.*").WithArgs(int64(42))
 				if scenario == "db-error" {
@@ -57,7 +60,7 @@ func TestProfilingReceiptPersistenceChecks(t *testing.T) {
 								out = "different"
 							}
 							if scenario != "missing-result" {
-								rows.AddRow(42, "host", "success", out, "")
+								rows.AddRow(42, "host", r.Status, out, "")
 							}
 							mock.ExpectQuery("SELECT .*task_host_42.*").WithArgs(int64(42), "host").WillReturnRows(rows)
 						}
@@ -65,7 +68,7 @@ func TestProfilingReceiptPersistenceChecks(t *testing.T) {
 				}
 			}
 			got, err := ProfilingResultStored("host", r)
-			if got != (scenario == "stored") {
+			if got != (scenario == "stored" || scenario == "killed") {
 				t.Fatalf("confirmed=%v err=%v", got, err)
 			}
 			if (err != nil) != (scenario == "db-error") {
@@ -75,5 +78,42 @@ func TestProfilingReceiptPersistenceChecks(t *testing.T) {
 				t.Fatal(err)
 			}
 		})
+	}
+}
+
+func TestProfilingKilledReportIsolation(t *testing.T) {
+	oldCenter := config.C.IsCenter
+	config.C.IsCenter = true
+	defer func() { config.C.IsCenter = oldCenter }()
+	const parent = "cpt-123e4567-e89b-12d3-a456-426614174000"
+	for _, caller := range []string{"continuous-profiling", "flashai", ""} {
+		t.Run(caller, func(t *testing.T) {
+			sql, mock, err := sqlmock.New()
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer sql.Close()
+			db, err := gorm.Open(mysql.New(mysql.Config{Conn: sql, SkipInitializeWithVersion: true}), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
+			if err != nil {
+				t.Fatal(err)
+			}
+			old := storage.DB
+			storage.DB = db
+			defer func() { storage.DB = old }()
+			mock.ExpectQuery("SELECT .*task_meta.*").WithArgs(int64(42)).WillReturnRows(sqlmock.NewRows([]string{"id", "system_caller", "script"}).AddRow(42, caller, "# CP_RETENTION_V1 task="+parent+"\n"))
+			ok, err := ProfilingKilledReport(types.ReportTask{Id: 42, Clock: 100, Status: "killed", ProfilingTaskID: parent})
+			if err != nil || ok != (caller == "continuous-profiling") {
+				t.Fatalf("ok=%v err=%v", ok, err)
+			}
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+	for _, r := range []types.ReportTask{{Id: 42, Clock: 100, Status: "killed"}, {Id: 42, Clock: 100, Status: "running", ProfilingTaskID: parent}, {Id: 42, Clock: 100, Status: "killed", ProfilingTaskID: "invalid"}} {
+		ok, err := ProfilingKilledReport(r)
+		if ok || err != nil {
+			t.Fatalf("ordinary/nonterminal changed: %+v %v", r, err)
+		}
 	}
 }

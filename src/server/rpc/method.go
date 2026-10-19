@@ -87,7 +87,11 @@ func handleDoneTask(req types.ReportRequest) error {
 				return err
 			}
 		} else {
-			if t.Status == "success" || t.Status == "failed" {
+			profilingKilled, err := models.ProfilingKilledReport(t)
+			if err != nil {
+				return err
+			}
+			if t.Status == "success" || t.Status == "failed" || profilingKilled {
 				_, isEdgeAlertTriggered := models.CheckExistAndEdgeAlertTriggered(req.Ident, t.Id)
 				// ibex agent可能会重复上报结果，如果任务已经不在task_host_doing缓存中了，说明该任务已经MarkDone了，不需要再处理
 				// if !exist {

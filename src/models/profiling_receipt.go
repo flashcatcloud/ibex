@@ -12,7 +12,7 @@ import (
 // MarkDoneStatus error as acknowledgement (some branches intentionally no-op).
 // Edge/cache-only results are not acknowledged: retain them on the Agent.
 func ProfilingResultStored(host string, r types.ReportTask) (bool, error) {
-	if !config.C.IsCenter || r.Id <= 0 || r.Clock <= 0 || (r.Status != "success" && r.Status != "failed") {
+	if !config.C.IsCenter || r.Id <= 0 || r.Clock <= 0 || (r.Status != "success" && r.Status != "failed" && r.Status != "killed") {
 		return false, nil
 	}
 	id, err := uuid.Parse(strings.TrimPrefix(r.ProfilingTaskID, "cpt-"))
@@ -55,4 +55,21 @@ func profilingReceiptMatchesMeta(meta *TaskMeta, parent string) bool {
 
 func profilingReceiptMatchesResult(stored *TaskHost, r types.ReportTask) bool {
 	return stored != nil && stored.Status == r.Status && stored.Stdout == r.Stdout && stored.Stderr == r.Stderr
+}
+
+// Additional terminal states are accepted only for authenticated Profiling metadata.
+// The ordinary ibex terminal-state policy is intentionally unchanged.
+func ProfilingKilledReport(r types.ReportTask) (bool, error) {
+	if r.Status != "killed" || r.Id <= 0 || r.Clock <= 0 {
+		return false, nil
+	}
+	id, err := uuid.Parse(strings.TrimPrefix(r.ProfilingTaskID, "cpt-"))
+	if err != nil || r.ProfilingTaskID != "cpt-"+id.String() {
+		return false, nil
+	}
+	meta, err := TaskMetaGet("id = ?", r.Id)
+	if err != nil {
+		return false, err
+	}
+	return profilingReceiptMatchesMeta(meta, r.ProfilingTaskID), nil
 }
