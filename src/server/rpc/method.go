@@ -57,6 +57,20 @@ func (*Server) Report(req types.ReportRequest, resp *types.ReportResponse) error
 		})
 	}
 	resp.AssignTasks = tasks
+	// Optional receipts only for explicitly opted-in profiling results.
+	for _, reported := range req.ReportTasks {
+		if reported.ProfilingTaskID == "" {
+			continue
+		}
+		confirmed, err := models.ProfilingResultStored(req.Ident, reported)
+		if err != nil {
+			logger.Warningf("profiling result confirmation %d: %v", reported.Id, err)
+			continue
+		}
+		if confirmed {
+			resp.ProfilingReceipts = append(resp.ProfilingReceipts, types.ProfilingReceipt{Id: reported.Id, Clock: reported.Clock, ProfilingTaskID: reported.ProfilingTaskID})
+		}
+	}
 
 	return nil
 }
@@ -73,7 +87,11 @@ func handleDoneTask(req types.ReportRequest) error {
 				return err
 			}
 		} else {
-			if t.Status == "success" || t.Status == "failed" {
+			profilingKilled, err := models.ProfilingKilledReport(t)
+			if err != nil {
+				return err
+			}
+			if t.Status == "success" || t.Status == "failed" || profilingKilled {
 				_, isEdgeAlertTriggered := models.CheckExistAndEdgeAlertTriggered(req.Ident, t.Id)
 				// ibex agent可能会重复上报结果，如果任务已经不在task_host_doing缓存中了，说明该任务已经MarkDone了，不需要再处理
 				// if !exist {
