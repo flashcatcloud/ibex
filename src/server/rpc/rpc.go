@@ -16,13 +16,32 @@ import (
 
 type Server int
 
-func Start(listen string) {
-	go serve(listen)
+// RegisterService adds an application-owned service to the existing Ibex listener.
+type RegisterService func(*rpc.Server) error
+
+func Start(listen string, additional ...RegisterService) {
+	go serve(listen, additional)
 }
 
-func serve(listen string) {
+func newRPCServer(additional []RegisterService) (*rpc.Server, error) {
 	server := rpc.NewServer()
-	server.Register(new(Server))
+	if err := server.Register(new(Server)); err != nil {
+		return nil, err
+	}
+	for _, register := range additional {
+		if err := register(server); err != nil {
+			return nil, err
+		}
+	}
+	return server, nil
+}
+
+func serve(listen string, additional []RegisterService) {
+	server, err := newRPCServer(additional)
+	if err != nil {
+		logger.Errorf("register ibex RPC service: %v", err)
+		return
+	}
 
 	l, err := net.Listen("tcp", listen)
 	if err != nil {

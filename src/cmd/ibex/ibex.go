@@ -25,7 +25,7 @@ var (
 )
 
 func ServerStart(isCenter bool, db *gorm.DB, rc redis.Cmdable, basicAuth gin.Accounts, heartbeat aconf.HeartbeatConfig,
-	api *n9eConf.CenterApi, r *gin.Engine, centerRouter *n9eRouter.Router, ibex conf.Ibex, httpPort int) {
+	api *n9eConf.CenterApi, r *gin.Engine, centerRouter *n9eRouter.Router, ibex conf.Ibex, httpPort int, additional ...rpc.RegisterService) {
 	config.C.IsCenter = isCenter
 	config.C.BasicAuth = make(gin.Accounts)
 	if len(basicAuth) > 0 {
@@ -52,7 +52,7 @@ func ServerStart(isCenter bool, db *gorm.DB, rc redis.Cmdable, basicAuth gin.Acc
 		os.Exit(1)
 	}
 
-	rpc.Start(ibex.RPCListen)
+	rpc.Start(ibex.RPCListen, additional...)
 
 	if isCenter {
 		storage.DB = db
