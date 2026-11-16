@@ -109,6 +109,10 @@ func (s Server) initialize() (func(), error) {
 		return fns.Ret(), err
 	}
 
+	if err := rpc.Start(config.C.RPC.Listen); err != nil {
+		return fns.Ret(), err
+	}
+
 	timer.CacheHostDoing()
 	timer.ReportResult()
 	if config.C.IsCenter {
@@ -120,9 +124,6 @@ func (s Server) initialize() (func(), error) {
 	r := router.New(s.Version)
 	httpClean := httpx.Init(config.C.HTTP, ctx, r)
 	fns.Add(httpClean)
-
-	// start rpc server
-	rpc.Start(config.C.RPC.Listen)
 
 	// release all the resources
 	return fns.Ret(), nil

@@ -6,7 +6,6 @@ import (
 	"io"
 	"net"
 	"net/rpc"
-	"os"
 	"reflect"
 	"time"
 
@@ -19,8 +18,21 @@ type Server int
 // RegisterService adds an application-owned service to the existing Ibex listener.
 type RegisterService func(*rpc.Server) error
 
-func Start(listen string, additional ...RegisterService) {
-	go serve(listen, additional)
+// Start returns after all services are registered and the TCP address is bound.
+func Start(listen string, additional ...RegisterService) error {
+	server, err := newRPCServer(additional)
+	if err != nil {
+		return fmt.Errorf("register ibex RPC service: %w", err)
+	}
+
+	listener, err := net.Listen("tcp", listen)
+	if err != nil {
+		return fmt.Errorf("listen for ibex RPC on %s: %w", listen, err)
+	}
+
+	fmt.Println("rpc.listening:", listener.Addr())
+	go serve(listener, server)
+	return nil
 }
 
 func newRPCServer(additional []RegisterService) (*rpc.Server, error) {
@@ -36,21 +48,7 @@ func newRPCServer(additional []RegisterService) (*rpc.Server, error) {
 	return server, nil
 }
 
-func serve(listen string, additional []RegisterService) {
-	server, err := newRPCServer(additional)
-	if err != nil {
-		logger.Errorf("register ibex RPC service: %v", err)
-		return
-	}
-
-	l, err := net.Listen("tcp", listen)
-	if err != nil {
-		fmt.Printf("fail to listen on: %s, error: %v\n", listen, err)
-		os.Exit(1)
-	}
-
-	fmt.Println("rpc.listening:", listen)
-
+func serve(l net.Listener, server *rpc.Server) {
 	var mh codec.MsgpackHandle
 	mh.MapType = reflect.TypeOf(map[string]interface{}(nil))
 
