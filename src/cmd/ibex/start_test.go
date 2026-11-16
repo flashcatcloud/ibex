@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"net"
-	stdrpc "net/rpc"
 	"runtime/pprof"
 	"strings"
 	"syscall"
@@ -15,7 +14,6 @@ import (
 	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/conf"
 	"github.com/flashcatcloud/ibex/src/server/config"
-	"github.com/flashcatcloud/ibex/src/server/rpc"
 	"github.com/flashcatcloud/ibex/src/storage"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
@@ -32,16 +30,6 @@ func TestServerStartRPCFailure(t *testing.T) {
 	oldConfig, oldCache, oldDB, oldPort := config.C, storage.Cache, storage.DB, HttpPort
 	config.C = new(config.Config)
 	t.Cleanup(func() { config.C, storage.Cache, storage.DB, HttpPort = oldConfig, oldCache, oldDB, oldPort })
-
-	t.Run("duplicate registration", func(t *testing.T) {
-		duplicate := func(s *stdrpc.Server) error { return s.Register(new(rpc.Server)) }
-		err := ServerStart(true, nil, startupRedis{}, nil, aconf.HeartbeatConfig{}, nil, gin.New(), nil,
-			conf.Ibex{RPCListen: "127.0.0.1:0"}, 0, duplicate)
-		if err == nil || !strings.Contains(err.Error(), "service already defined: Server") {
-			t.Fatalf("expected duplicate service error, got %v", err)
-		}
-		assertNoCenterTimers(t)
-	})
 
 	t.Run("missing port", func(t *testing.T) {
 		err := ServerStart(true, nil, startupRedis{}, nil, aconf.HeartbeatConfig{}, nil, gin.New(), nil,

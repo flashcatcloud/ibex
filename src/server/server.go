@@ -109,7 +109,7 @@ func (s Server) initialize() (func(), error) {
 		return fns.Ret(), err
 	}
 
-	if err := rpc.Start(config.C.RPC.Listen); err != nil {
+	if _, err := rpc.Start(config.C.RPC.Listen); err != nil {
 		return fns.Ret(), err
 	}
 
