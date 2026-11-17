@@ -2,8 +2,8 @@ package ibex
 
 import (
 	"fmt"
+	"net"
 	"os"
-	"strings"
 
 	"github.com/flashcatcloud/ibex/src/server/config"
 	"github.com/flashcatcloud/ibex/src/server/router"
@@ -25,7 +25,7 @@ var (
 )
 
 func ServerStart(isCenter bool, db *gorm.DB, rc redis.Cmdable, basicAuth gin.Accounts, heartbeat aconf.HeartbeatConfig,
-	api *n9eConf.CenterApi, r *gin.Engine, centerRouter *n9eRouter.Router, ibex conf.Ibex, httpPort int) {
+	api *n9eConf.CenterApi, r *gin.Engine, centerRouter *n9eRouter.Router, ibex conf.Ibex, httpPort int, additional ...*rpc.Service) error {
 	config.C.IsCenter = isCenter
 	config.C.BasicAuth = make(gin.Accounts)
 	if len(basicAuth) > 0 {
@@ -34,7 +34,11 @@ func ServerStart(isCenter bool, db *gorm.DB, rc redis.Cmdable, basicAuth gin.Acc
 
 	config.C.Heartbeat.IP = heartbeat.IP
 	config.C.Heartbeat.Interval = heartbeat.Interval
-	config.C.Heartbeat.LocalAddr = schedulerAddrGet(ibex.RPCListen)
+	_, port, err := net.SplitHostPort(ibex.RPCListen)
+	if err != nil {
+		return fmt.Errorf("invalid ibex RPC listen address %q: %w", ibex.RPCListen, err)
+	}
+	config.C.Heartbeat.LocalAddr = net.JoinHostPort(config.GetOutboundIP().String(), port)
 	HttpPort = httpPort
 
 	config.C.Output.ComeFrom = ibex.Output.ComeFrom
@@ -52,30 +56,26 @@ func ServerStart(isCenter bool, db *gorm.DB, rc redis.Cmdable, basicAuth gin.Acc
 		os.Exit(1)
 	}
 
-	rpc.Start(ibex.RPCListen)
-
 	if isCenter {
 		storage.DB = db
-
-		go timer.Heartbeat()
-		go timer.Schedule()
-		go timer.CleanLong()
 	} else {
 		config.C.CenterApi = *api
 	}
 
-	timer.CacheHostDoing()
-	timer.ReportResult()
-}
-
-func schedulerAddrGet(rpcListen string) string {
-	ip := fmt.Sprint(config.GetOutboundIP())
-	if ip == "" {
-		fmt.Println("heartbeat ip auto got is blank")
-		os.Exit(1)
+	baseReady, err := rpc.Start(ibex.RPCListen, additional...)
+	if err != nil {
+		return err
+	}
+	if !baseReady {
+		return nil // Only application services are running.
+	}
+	if isCenter {
+		go timer.Heartbeat()
+		go timer.Schedule()
+		go timer.CleanLong()
 	}
 
-	port := strings.Split(rpcListen, ":")[1]
-	localAddr := ip + ":" + port
-	return localAddr
+	timer.CacheHostDoing()
+	timer.ReportResult()
+	return nil
 }
